@@ -402,47 +402,71 @@ const FinlandTripApp = () => {
 
 // Separate component to handle Leaflet logic
 const MapInitializer = ({ itinerary, activeTab }) => {
-  const mapInstanceRef = useRef(null);
+  const mapRef = useRef(null);
   const [leafletReady, setLeafletReady] = useState(false);
 
   useEffect(() => {
-    // 1. Check if Leaflet CSS is already present
-    if (!document.querySelector('link[href*="leaflet"]')) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
+    // 1. Check if Leaflet CSS/JS is already present
+    if (typeof window !== 'undefined') {
+        // Safe check function
+        const isReady = () => window.L && typeof window.L.map === 'function';
 
-    // 2. Check if Leaflet JS is present
-    if (window.L && window.L.map) {
-      setLeafletReady(true);
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.async = true;
-      script.onload = () => setLeafletReady(true);
-      document.head.appendChild(script);
+        if (isReady()) {
+            setLeafletReady(true);
+            return;
+        }
+
+        const hasCss = document.querySelector('link[href*="leaflet.css"]');
+        const existingScript = document.querySelector('script[src*="leaflet.js"]');
+
+        if (!hasCss) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+            document.head.appendChild(link);
+        }
+
+        if (!existingScript) {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.async = true;
+            script.onload = () => {
+                if (isReady()) setLeafletReady(true);
+            };
+            document.head.appendChild(script);
+        }
+        
+        // Polling to ensure L.map is ready (handles race conditions or pre-existing script)
+        const checkInterval = setInterval(() => {
+             if (isReady()) {
+                 setLeafletReady(true);
+                 clearInterval(checkInterval);
+             }
+        }, 100);
+
+        return () => clearInterval(checkInterval);
     }
   }, []);
 
   useEffect(() => {
+    // If not on itinerary tab or Leaflet not loaded, return
     if (activeTab !== 'itinerary' || !leafletReady) return;
+    
+    // Double check L.map exists before usage to avoid crash
+    if (!window.L || typeof window.L.map !== 'function') return;
 
-    // Safety check for container
     const container = document.getElementById('map-container');
     if (!container) return;
 
-    // Check if map is already initialized
-    if (mapInstanceRef.current) {
-        // Map exists, just invalidate size to handle tab switching
-        setTimeout(() => mapInstanceRef.current.invalidateSize(), 100);
-        return;
+    // Destroy existing map if it exists to prevent "Map already initialized" error
+    if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
     }
 
     try {
         // Init Map centered on Finland
-        const map = window.L.map('map-container').setView([64.5, 26.0], 5);
+        const map = window.L.map(container).setView([64.5, 26.0], 5);
         
         window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -465,10 +489,18 @@ const MapInitializer = ({ itinerary, activeTab }) => {
               map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
         }
         
-        mapInstanceRef.current = map;
+        mapRef.current = map;
     } catch (err) {
         console.error("Map initialization failed:", err);
     }
+
+    // Cleanup function: remove map when component unmounts or tab changes
+    return () => {
+        if (mapRef.current) {
+            mapRef.current.remove();
+            mapRef.current = null;
+        }
+    };
 
   }, [activeTab, itinerary, leafletReady]);
 
