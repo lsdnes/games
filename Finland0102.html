@@ -119,39 +119,63 @@
           const [selectedDay, setSelectedDay] = useState(null);
           const [auroraData, setAuroraData] = useState({});
 
-          // 模擬極光數據生成器
-          const checkAurora = (dayId, location) => {
+          // 真實極光數據 API (替換原有的模擬資料)
+          const checkAurora = async (dayId, coords) => {
             setAuroraData(prev => ({ ...prev, [dayId]: { loading: true } }));
             
-            setTimeout(() => {
-              const kp = (Math.random() * 5 + 2).toFixed(1); 
-              const cloud = Math.floor(Math.random() * 60); 
-              
-              let chance = '低';
-              let color = 'text-gray-500';
-              if (kp > 4 && cloud < 30) {
-                chance = '極高! (High)';
-                color = 'text-green-600';
-              } else if (kp > 3 && cloud < 50) {
-                chance = '中等 (Moderate)';
-                color = 'text-yellow-600';
-              } else {
-                chance = '較低 (Low)';
-                color = 'text-gray-500';
-              }
+            try {
+                // 使用真實 API 獲取 KP 值與機率
+                // coords[0] 是 lat, coords[1] 是 lon
+                const response = await fetch(`https://tskds213.synology.me/test/kp.php?lat=${coords[0]}&lon=${coords[1]}`);
+                const data = await response.json();
 
-              setAuroraData(prev => ({
-                ...prev,
-                [dayId]: {
-                  loading: false,
-                  kp,
-                  cloud,
-                  chance,
-                  color,
-                  timestamp: new Date().toLocaleTimeString()
+                if (data.ok) {
+                    const kp = data.kp.value;
+                    const prob = data.probability.value;
+
+                    let chance = '低 (Low)';
+                    let color = 'text-gray-500';
+                    
+                    if (prob >= 70) {
+                        chance = '極高! (High)';
+                        color = 'text-green-600';
+                    } else if (prob >= 30) {
+                        chance = '中等 (Moderate)';
+                        color = 'text-yellow-600';
+                    } else {
+                        chance = '較低 (Low)';
+                        color = 'text-gray-500';
+                    }
+
+                    setAuroraData(prev => ({
+                        ...prev,
+                        [dayId]: {
+                            loading: false,
+                            kp: kp,
+                            prob: prob, // 使用 API 回傳的機率值
+                            chance: chance,
+                            color: color,
+                            timestamp: new Date().toLocaleTimeString(),
+                            source: 'Real Data'
+                        }
+                    }));
+                } else {
+                    throw new Error("API returned not ok");
                 }
-              }));
-            }, 1500);
+            } catch (error) {
+                console.error("Aurora API Error:", error);
+                setAuroraData(prev => ({
+                    ...prev,
+                    [dayId]: {
+                        loading: false,
+                        kp: "N/A",
+                        prob: 0,
+                        chance: "連線失敗",
+                        color: "text-red-500",
+                        timestamp: new Date().toLocaleTimeString()
+                    }
+                }));
+            }
           };
 
           const itinerary = [
@@ -265,21 +289,21 @@
                                   <h4 className="font-bold flex items-center gap-2 mb-2 text-green-300"><Navigation size={18} /> 極光觀測站: {day.location}</h4>
                                   
                                   {!auroraData[day.day] ? (
-                                    <button onClick={(e) => { e.stopPropagation(); checkAurora(day.day, day.location); }} className="w-full bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded border border-white/20 transition flex items-center justify-center gap-2 text-sm font-medium">
-                                      <Camera size={16} /> 檢測即時極光機率
+                                    <button onClick={(e) => { e.stopPropagation(); checkAurora(day.day, day.coords); }} className="w-full bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded border border-white/20 transition flex items-center justify-center gap-2 text-sm font-medium">
+                                      <Camera size={16} /> 檢測即時極光機率 (API)
                                     </button>
                                   ) : auroraData[day.day].loading ? (
                                     <div className="flex items-center justify-center gap-3 py-2 text-sm text-blue-200">
-                                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-400 border-t-transparent"></div> 正在分析磁場數據...
+                                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-400 border-t-transparent"></div> 正在連線 NOAA 數據...
                                     </div>
                                   ) : (
                                     <div className="space-y-3 animate-in fade-in duration-500">
                                       <div className="flex justify-between items-end">
                                         <div><div className="text-xs text-slate-400">KP 指數</div><div className="text-2xl font-bold text-green-400">{auroraData[day.day].kp}</div></div>
-                                        <div><div className="text-xs text-slate-400">雲層覆蓋</div><div className="text-2xl font-bold text-blue-300">{auroraData[day.day].cloud}%</div></div>
+                                        <div><div className="text-xs text-slate-400">機率數值</div><div className="text-2xl font-bold text-blue-300">{auroraData[day.day].prob}%</div></div>
                                         <div className="text-right"><div className="text-xs text-slate-400">可見機率</div><div className={`text-xl font-bold ${auroraData[day.day].color}`}>{auroraData[day.day].chance}</div></div>
                                       </div>
-                                      <div className="text-[10px] text-slate-500 text-center border-t border-white/10 pt-2">數據更新時間: {auroraData[day.day].timestamp} (模擬數據)</div>
+                                      <div className="text-[10px] text-slate-500 text-center border-t border-white/10 pt-2">數據更新時間: {auroraData[day.day].timestamp} (真實數據)</div>
                                     </div>
                                   )}
                                 </div>
