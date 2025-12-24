@@ -1,0 +1,154 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumCalc - 啟動中</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); opacity: 0.1; }
+            50% { transform: translateY(-20px) rotate(5deg); opacity: 0.2; }
+            100% { transform: translateY(0px) rotate(0deg); opacity: 0.1; }
+        }
+        .formula-watermark {
+            position: absolute;
+            font-family: 'serif';
+            font-style: italic;
+            pointer-events: none;
+            color: #60a5fa;
+            animation: float 8s ease-in-out infinite;
+        }
+        .pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        .fade-in {
+            animation: fadeIn 1.2s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-[#0a0f1e] h-screen w-full flex flex-col items-center justify-center overflow-hidden font-sans text-slate-100">
+
+    <!-- Math Formula Watermarks -->
+    <div class="absolute inset-0 z-0 overflow-hidden select-none">
+        <div class="formula-watermark text-3xl top-[10%] left-[15%]" style="animation-delay: 0s;">∫ e^x dx = e^x + C</div>
+        <div class="formula-watermark text-4xl top-[25%] right-[10%]" style="animation-delay: 1s;">E = mc²</div>
+        <div class="formula-watermark text-2xl bottom-[20%] left-[5%]" style="animation-delay: 2s;">∇ · B = 0</div>
+        <div class="formula-watermark text-5xl bottom-[15%] right-[20%]" style="animation-delay: 1.5s;">∑ i=1 to n</div>
+        <div class="formula-watermark text-3xl top-[45%] left-[8%]" style="animation-delay: 3s;">sin²θ + cos²θ = 1</div>
+        <div class="formula-watermark text-2xl top-[70%] left-[40%]" style="animation-delay: 0.5s;">i² = -1</div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="relative z-10 flex flex-col items-center justify-center fade-in">
+        
+        <!-- App Icon -->
+        <div class="relative mb-8">
+            <!-- Glow Effect -->
+            <div class="absolute inset-0 bg-blue-500 blur-3xl opacity-20 rounded-full scale-150"></div>
+            
+            <div class="relative w-32 h-32 bg-gradient-to-br from-blue-600 to-indigo-900 rounded-[2.5rem] flex items-center justify-center shadow-2xl border border-blue-400/30 pulse-slow">
+                <div class="grid grid-cols-2 gap-2 p-6">
+                    <div class="w-4 h-4 rounded-sm bg-white/20"></div>
+                    <div class="w-4 h-4 rounded-sm bg-white/40"></div>
+                    <div class="w-4 h-4 rounded-sm bg-white/60"></div>
+                    <div class="w-4 h-4 rounded-sm bg-white/90"></div>
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <i class="fa-solid fa-atom text-white/20 text-7xl rotate-12"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brand Name -->
+        <h1 class="text-4xl font-bold tracking-tight mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-indigo-400">
+            QuantumCalc
+        </h1>
+        <p class="text-slate-400 font-light tracking-[0.2em] uppercase text-xs mb-12">
+            Precision Reimagined
+        </p>
+
+        <!-- Loading Indicator -->
+        <div class="w-48 h-1 bg-slate-800 rounded-full overflow-hidden">
+            <div id="progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 w-0 transition-all duration-[3000ms] ease-out"></div>
+        </div>
+
+        <!-- Manual Navigation (Fallback) -->
+        <button data-goto="p2" id="nav-trigger" class="mt-12 text-slate-500 hover:text-white text-sm transition-colors border-b border-transparent hover:border-slate-500 pb-1 opacity-0 pointer-events-none group">
+            正在啟動主界面... <i class="fa-solid fa-arrow-right ml-1 group-hover:translate-x-1 transition-transform"></i>
+        </button>
+    </div>
+
+    <!-- Background Decoration Gradient -->
+    <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-blue-900/10 to-transparent pointer-events-none"></div>
+
+    <script>
+        // Automatic Transition Logic
+        window.addEventListener('DOMContentLoaded', () => {
+            const progressBar = document.getElementById('progress-bar');
+            const navTrigger = document.getElementById('nav-trigger');
+
+            // Start progress bar animation
+            setTimeout(() => {
+                progressBar.style.width = '100%';
+            }, 100);
+
+            // Show manual button after a short delay
+            setTimeout(() => {
+                navTrigger.classList.remove('opacity-0', 'pointer-events-none');
+            }, 1500);
+
+            // Automatic navigation after 3.5 seconds
+            setTimeout(() => {
+                // In a real environment, the system listens for data-goto. 
+                // We simulate a click on an element with that attribute.
+                const target = document.querySelector('[data-goto="p2"]');
+                if (target) {
+                    // This satisfies the prototype requirement for data-goto interaction
+                    target.click();
+                    
+                    // Fallback visual feedback for standalone viewing
+                    console.log("Navigating to p2...");
+                }
+            }, 3500);
+        });
+
+        // Basic Prototype Navigation Handler (Mock)
+        document.body.addEventListener('click', (e) => {
+            const target = e.target.closest('[data-goto]');
+            if (target) {
+                const pageId = target.getAttribute('data-goto');
+                console.log(`Transitioning to Page ID: ${pageId}`);
+                // In the actual prototype viewer, this would trigger the page change.
+            }
+        });
+    </script>
+
+<script>
+  // Pro Prototype - Static Navigation Shim
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-goto]');
+      if (target) {
+        e.preventDefault();
+        const pageId = target.getAttribute('data-goto');
+        // Navigate to the corresponding HTML file
+        window.location.href = pageId + '.html';
+      }
+    });
+  });
+</script>
+</body>
+</html>
+
+```

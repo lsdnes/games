@@ -1,0 +1,282 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>設置與偏好 - Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .switch-checkbox:checked + .switch-label {
+            background-color: #3b82f6;
+        }
+        
+        .switch-checkbox:checked + .switch-label .switch-dot {
+            transform: translateX(100%);
+        }
+
+        .theme-option.active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Custom range slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            margin-top: -7px;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-slate-100 min-h-screen pb-24">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-zinc-950/80 backdrop-blur-md px-6 py-4 flex items-center justify-between border-b border-white/10">
+        <button data-goto="p2" class="p-2 -ml-2 hover:bg-white/10 rounded-full transition-colors">
+            <i class="fa-solid fa-chevron-left text-xl"></i>
+        </button>
+        <h1 class="text-xl font-bold">設置與偏好</h1>
+        <div class="w-10"></div> <!-- Spacer for centering title -->
+    </header>
+
+    <main class="max-w-2xl mx-auto p-6 space-y-8">
+        
+        <!-- Appearance Section -->
+        <section>
+            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 px-1">外觀主題</h2>
+            <div class="grid grid-cols-3 gap-3">
+                <button class="theme-option active border-2 border-transparent rounded-2xl p-4 flex flex-col items-center gap-2 transition-all">
+                    <div class="w-full aspect-square bg-zinc-900 rounded-lg border border-white/10 shadow-inner flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-full bg-slate-100"></div>
+                    </div>
+                    <span class="text-xs font-medium">深色模式</span>
+                </button>
+                <button class="theme-option border-2 border-transparent rounded-2xl p-4 flex flex-col items-center gap-2 transition-all">
+                    <div class="w-full aspect-square bg-slate-100 rounded-lg border border-zinc-200 shadow-inner flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-full bg-zinc-900"></div>
+                    </div>
+                    <span class="text-xs font-medium">淺色模式</span>
+                </button>
+                <button class="theme-option border-2 border-transparent rounded-2xl p-4 flex flex-col items-center gap-2 transition-all">
+                    <div class="w-full aspect-square rounded-lg border border-white/20 bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-md shadow-inner flex items-center justify-center">
+                        <i class="fa-solid fa-droplet text-blue-400"></i>
+                    </div>
+                    <span class="text-xs font-medium">透明毛玻璃</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Calculation Logic Section -->
+        <section class="space-y-4">
+            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider px-1">計算邏輯</h2>
+            
+            <div class="glass-card rounded-2xl p-5 space-y-6">
+                <!-- Precision -->
+                <div class="flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <label class="font-medium">計算精度</label>
+                        <span class="text-blue-400 font-mono font-bold">8 位小數</span>
+                    </div>
+                    <input type="range" min="0" max="15" value="8" class="w-full">
+                    <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+                        <span>0</span>
+                        <span>5</span>
+                        <span>10</span>
+                        <span>15</span>
+                    </div>
+                </div>
+
+                <hr class="border-white/5">
+
+                <!-- Angle Units -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">角度單位</p>
+                        <p class="text-xs text-slate-400">三角函數使用的單位</p>
+                    </div>
+                    <div class="bg-zinc-800 p-1 rounded-xl flex items-center">
+                        <button class="px-4 py-1.5 bg-blue-600 rounded-lg text-xs font-bold shadow-lg transition-all">DEG</button>
+                        <button class="px-4 py-1.5 text-slate-400 text-xs font-bold transition-all">RAD</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Settings Section -->
+        <section class="space-y-4">
+            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider px-1">系統反饋</h2>
+            <div class="glass-card rounded-2xl divide-y divide-white/5">
+                <!-- Vibration -->
+                <div class="flex items-center justify-between p-5">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
+                            <i class="fa-solid fa-vibration"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">按鍵震動反饋</p>
+                            <p class="text-xs text-slate-400">觸覺感官增強</p>
+                        </div>
+                    </div>
+                    <div class="relative inline-block w-12 align-middle select-none">
+                        <input type="checkbox" id="vibrate" class="switch-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-transparent appearance-none cursor-pointer transition-transform duration-200 ease-in" checked/>
+                        <label for="vibrate" class="switch-label block overflow-hidden h-6 rounded-full bg-zinc-700 cursor-pointer transition-colors duration-200 ease-in">
+                            <span class="switch-dot"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Sound Effects -->
+                <div class="flex items-center justify-between p-5">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">音效開關</p>
+                            <p class="text-xs text-slate-400">計算完成提示音</p>
+                        </div>
+                    </div>
+                    <div class="relative inline-block w-12 align-middle select-none">
+                        <input type="checkbox" id="sound" class="switch-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-transparent appearance-none cursor-pointer transition-transform duration-200 ease-in"/>
+                        <label for="sound" class="switch-label block overflow-hidden h-6 rounded-full bg-zinc-700 cursor-pointer transition-colors duration-200 ease-in">
+                            <span class="switch-dot"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data & Support -->
+        <section class="space-y-4">
+            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider px-1">數據與支持</h2>
+            <div class="glass-card rounded-2xl overflow-hidden">
+                <button class="w-full flex items-center justify-between p-5 hover:bg-white/5 transition-colors border-b border-white/5">
+                    <div class="flex items-center gap-4">
+                        <i class="fa-solid fa-trash-can text-red-400"></i>
+                        <span class="font-medium">清除所有歷史記錄</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 text-sm"></i>
+                </button>
+                <button class="w-full flex items-center justify-between p-5 hover:bg-white/5 transition-colors border-b border-white/5">
+                    <div class="flex items-center gap-4">
+                        <i class="fa-solid fa-rotate-left text-slate-400"></i>
+                        <span class="font-medium">重置為默認設置</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 text-sm"></i>
+                </button>
+                <button class="w-full flex items-center justify-between p-5 hover:bg-white/5 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <i class="fa-solid fa-circle-info text-slate-400"></i>
+                        <span class="font-medium">關於我們</span>
+                    </div>
+                    <span class="text-xs text-slate-500">v2.4.0 (2023)</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-zinc-950/80 backdrop-blur-xl border-t border-white/10 px-4 py-2 flex justify-around items-center z-50">
+        <button data-goto="p2" class="flex flex-col items-center gap-1 p-2 text-slate-500 hover:text-blue-500 transition-colors">
+            <i class="fa-solid fa-calculator text-xl"></i>
+            <span class="text-[10px]">計算</span>
+        </button>
+        <button data-goto="p4" class="flex flex-col items-center gap-1 p-2 text-slate-500 hover:text-blue-500 transition-colors">
+            <i class="fa-solid fa-arrow-right-arrow-left text-xl"></i>
+            <span class="text-[10px]">換算</span>
+        </button>
+        <button data-goto="p5" class="flex flex-col items-center gap-1 p-2 text-slate-500 hover:text-blue-500 transition-colors">
+            <i class="fa-solid fa-chart-line text-xl"></i>
+            <span class="text-[10px]">圖表</span>
+        </button>
+        <button data-goto="p3" class="flex flex-col items-center gap-1 p-2 text-slate-500 hover:text-blue-500 transition-colors">
+            <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+            <span class="text-[10px]">歷史</span>
+        </button>
+        <button data-goto="p6" class="flex flex-col items-center gap-1 p-2 text-blue-500 transition-colors">
+            <i class="fa-solid fa-gear text-xl"></i>
+            <span class="text-[10px]">設置</span>
+        </button>
+    </nav>
+
+    <script>
+        // Simple interactions for the demo
+        document.querySelectorAll('[data-goto]').forEach(button => {
+            button.addEventListener('click', () => {
+                const target = button.getAttribute('data-goto');
+                console.log(`Navigating to ${target}`);
+                // In a real app, this would trigger the page transition
+                // For this prototype, we'll just flash the screen
+                document.body.classList.add('opacity-50');
+                setTimeout(() => {
+                    document.body.classList.remove('opacity-50');
+                }, 100);
+            });
+        });
+
+        // Theme selection toggle
+        const themeOptions = document.querySelectorAll('.theme-option');
+        themeOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                themeOptions.forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+            });
+        });
+
+        // Haptic simulation
+        const vibrateToggle = document.getElementById('vibrate');
+        vibrateToggle.addEventListener('change', (e) => {
+            if (e.target.checked && navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        });
+    </script>
+
+<script>
+  // Pro Prototype - Static Navigation Shim
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-goto]');
+      if (target) {
+        e.preventDefault();
+        const pageId = target.getAttribute('data-goto');
+        // Navigate to the corresponding HTML file
+        window.location.href = pageId + '.html';
+      }
+    });
+  });
+</script>
+</body>
+</html>
+
+```

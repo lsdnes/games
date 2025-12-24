@@ -1,0 +1,214 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科學計算機 (Main Calculator)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .calc-display {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .keypad-button {
+            transition: all 0.1s ease-in-out;
+            user-select: none;
+        }
+
+        .keypad-button:active {
+            transform: scale(0.92);
+            filter: brightness(1.2);
+        }
+
+        .scientific-drawer {
+            transition: max-height 0.3s ease-in-out, opacity 0.2s ease;
+        }
+
+        .glass-effect {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Custom scrollbar for small areas */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex flex-col max-w-md mx-auto shadow-2xl relative">
+
+    <!-- Top Navigation Bar -->
+    <header class="flex justify-between items-center px-6 py-4 z-10">
+        <div class="flex gap-4">
+            <button data-goto="p6" class="w-10 h-10 flex items-center justify-center rounded-full glass-effect hover:bg-slate-700">
+                <i class="fa-solid fa-gear text-slate-400"></i>
+            </button>
+            <button data-goto="p4" class="px-4 h-10 flex items-center gap-2 rounded-full glass-effect hover:bg-slate-700 text-xs font-semibold text-slate-300">
+                <i class="fa-solid fa-repeat"></i> 單位換算
+            </button>
+        </div>
+        <div class="flex gap-4">
+            <button data-goto="p5" class="w-10 h-10 flex items-center justify-center rounded-full glass-effect hover:bg-slate-700">
+                <i class="fa-solid fa-chart-line text-cyan-400"></i>
+            </button>
+            <button data-goto="p3" class="w-10 h-10 flex items-center justify-center rounded-full glass-effect hover:bg-slate-700">
+                <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Display Area -->
+    <main class="flex-1 flex flex-col justify-end px-8 pb-6 space-y-2">
+        <!-- Expression Line -->
+        <div class="text-right text-slate-500 text-xl overflow-x-auto whitespace-nowrap calc-display">
+            sin(45°) × √(256) + 12.5
+        </div>
+        <!-- Result Line -->
+        <div class="text-right text-white text-6xl font-bold calc-display tracking-tighter">
+            240.5
+        </div>
+    </main>
+
+    <!-- Keypad Section -->
+    <section class="bg-slate-900 rounded-t-[3rem] p-6 pb-8 shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
+        
+        <!-- Scientific Drawer Toggle -->
+        <div class="flex justify-center mb-4">
+            <button id="toggleScientific" class="w-12 h-1.5 bg-slate-700 rounded-full hover:bg-slate-500"></button>
+        </div>
+
+        <!-- Scientific Keys (Collapsible) -->
+        <div id="scientificPanel" class="scientific-drawer grid grid-cols-5 gap-3 mb-4 overflow-hidden max-h-0 opacity-0">
+            <button class="keypad-button h-12 rounded-xl glass-effect text-cyan-500 font-medium text-sm">sin</button>
+            <button class="keypad-button h-12 rounded-xl glass-effect text-cyan-500 font-medium text-sm">cos</button>
+            <button class="keypad-button h-12 rounded-xl glass-effect text-cyan-500 font-medium text-sm">tan</button>
+            <button class="keypad-button h-12 rounded-xl glass-effect text-cyan-500 font-medium text-sm">log</button>
+            <button class="keypad-button h-12 rounded-xl glass-effect text-cyan-500 font-medium text-sm">ln</button>
+            
+            <button class="keypad-button h-12 rounded-xl glass-effect text-slate-300 font-medium text-sm">π</button>
+            <button class="keypad-button h-12 rounded-xl glass-effect text-slate-300 font-medium text-sm">e</button>
+            <button class="keypad-button h-12 rounded-xl glass-effect text-slate-300 font-medium text-sm">x²</button>
+            <button class="keypad-button h-12 rounded-xl glass-effect text-slate-300 font-medium text-sm">xⁿ</button>
+            <button class="keypad-button h-12 rounded-xl glass-effect text-slate-300 font-medium text-sm">√</button>
+        </div>
+
+        <!-- Main Keypad -->
+        <div class="grid grid-cols-4 gap-4">
+            <!-- Row 1 -->
+            <button class="keypad-button h-16 bg-red-500/10 text-red-500 rounded-2xl text-xl font-bold hover:bg-red-500/20">AC</button>
+            <button class="keypad-button h-16 bg-slate-800 text-cyan-500 rounded-2xl text-xl font-bold hover:bg-slate-700">( )</button>
+            <button class="keypad-button h-16 bg-slate-800 text-cyan-500 rounded-2xl text-xl font-bold hover:bg-slate-700">%</button>
+            <button class="keypad-button h-16 bg-blue-600 text-white rounded-2xl text-2xl font-bold hover:bg-blue-500">÷</button>
+            
+            <!-- Row 2 -->
+            <button class="keypad-button h-16 bg-slate-800 text-slate-100 rounded-2xl text-2xl font-semibold hover:bg-slate-700">7</button>
+            <button class="keypad-button h-16 bg-slate-800 text-slate-100 rounded-2xl text-2xl font-semibold hover:bg-slate-700">8</button>
+            <button class="keypad-button h-16 bg-slate-800 text-slate-100 rounded-2xl text-2xl font-semibold hover:bg-slate-700">9</button>
+            <button class="keypad-button h-16 bg-blue-600 text-white rounded-2xl text-2xl font-bold hover:bg-blue-500">×</button>
+            
+            <!-- Row 3 -->
+            <button class="keypad-button h-16 bg-slate-800 text-slate-100 rounded-2xl text-2xl font-semibold hover:bg-slate-700">4</button>
+            <button class="keypad-button h-16 bg-slate-800 text-slate-100 rounded-2xl text-2xl font-semibold hover:bg-slate-700">5</button>
+            <button class="keypad-button h-16 bg-slate-800 text-slate-100 rounded-2xl text-2xl font-semibold hover:bg-slate-700">6</button>
+            <button class="keypad-button h-16 bg-blue-600 text-white rounded-2xl text-3xl font-bold hover:bg-blue-500">−</button>
+            
+            <!-- Row 4 -->
+            <button class="keypad-button h-16 bg-slate-800 text-slate-100 rounded-2xl text-2xl font-semibold hover:bg-slate-700">1</button>
+            <button class="keypad-button h-16 bg-slate-800 text-slate-100 rounded-2xl text-2xl font-semibold hover:bg-slate-700">2</button>
+            <button class="keypad-button h-16 bg-slate-800 text-slate-100 rounded-2xl text-2xl font-semibold hover:bg-slate-700">3</button>
+            <button class="keypad-button h-16 bg-blue-600 text-white rounded-2xl text-2xl font-bold hover:bg-blue-500">+</button>
+            
+            <!-- Row 5 -->
+            <button class="keypad-button h-16 bg-slate-800 text-slate-100 rounded-2xl text-2xl font-semibold hover:bg-slate-700">0</button>
+            <button class="keypad-button h-16 bg-slate-800 text-slate-100 rounded-2xl text-2xl font-semibold hover:bg-slate-700">.</button>
+            <button class="keypad-button h-16 bg-slate-800 text-slate-400 rounded-2xl text-xl hover:bg-slate-700">
+                <i class="fa-solid fa-delete-left"></i>
+            </button>
+            <button class="keypad-button h-16 bg-gradient-to-br from-cyan-500 to-blue-600 text-white rounded-2xl text-3xl font-bold shadow-lg shadow-cyan-900/50 hover:from-cyan-400 hover:to-blue-500">
+                =
+            </button>
+        </div>
+    </section>
+
+    <!-- Bottom Indicator for mobile feel -->
+    <div class="h-1 bg-slate-800 w-32 mx-auto rounded-full mb-2 opacity-50"></div>
+
+    <script>
+        // Toggle Scientific Panel
+        const toggleBtn = document.getElementById('toggleScientific');
+        const sciPanel = document.getElementById('scientificPanel');
+        let isOpen = false;
+
+        toggleBtn.addEventListener('click', () => {
+            isOpen = !isOpen;
+            if (isOpen) {
+                sciPanel.style.maxHeight = '150px';
+                sciPanel.style.opacity = '1';
+                sciPanel.style.marginTop = '1rem';
+                toggleBtn.classList.add('bg-cyan-500');
+            } else {
+                sciPanel.style.maxHeight = '0';
+                sciPanel.style.opacity = '0';
+                sciPanel.style.marginTop = '0';
+                toggleBtn.classList.remove('bg-cyan-500');
+            }
+        });
+
+        // Handle navigation via data-goto
+        document.querySelectorAll('[data-goto]').forEach(element => {
+            element.addEventListener('click', () => {
+                const targetId = element.getAttribute('data-goto');
+                console.log(`Navigating to ${targetId}`);
+                // In a real prototype, you'd hide current page and show target page.
+                // For this single file task, we'll just log it.
+                // If it were a real environment: window.location.hash = targetId;
+                
+                // Adding a simple visual feedback for navigation
+                element.classList.add('ring-2', 'ring-cyan-500', 'ring-opacity-50');
+                setTimeout(() => element.classList.remove('ring-2'), 200);
+            });
+        });
+
+        // Basic button feedback logic (Visual only)
+        document.querySelectorAll('.keypad-button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const val = this.innerText || 'del';
+                console.log('Pressed:', val);
+            });
+        });
+    </script>
+
+<script>
+  // Pro Prototype - Static Navigation Shim
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-goto]');
+      if (target) {
+        e.preventDefault();
+        const pageId = target.getAttribute('data-goto');
+        // Navigate to the corresponding HTML file
+        window.location.href = pageId + '.html';
+      }
+    });
+  });
+</script>
+</body>
+</html>
+```

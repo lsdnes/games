@@ -1,0 +1,362 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>函數繪圖 - Graphing Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .math-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        canvas {
+            touch-action: none;
+            cursor: crosshair;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .function-input:focus {
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <!-- Header -->
+    <header class="p-4 flex justify-between items-center bg-slate-900 border-b border-slate-800 z-20">
+        <div class="flex items-center gap-4">
+            <button data-goto="p2" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-800 transition-colors">
+                <i class="fa-solid fa-arrow-left text-lg"></i>
+            </button>
+            <h1 class="text-xl font-semibold">函數繪圖 <span class="text-indigo-400 text-sm font-normal ml-2">Graphing</span></h1>
+        </div>
+        <div class="flex gap-2">
+            <button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-800" title="分享截圖">
+                <i class="fa-solid fa-share-nodes"></i>
+            </button>
+            <button data-goto="p6" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-800">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="relative flex-1 overflow-hidden flex flex-col">
+        
+        <!-- Canvas Layer -->
+        <canvas id="graphCanvas" class="w-full h-full bg-slate-950"></canvas>
+
+        <!-- Coordinates Overlay -->
+        <div id="coordDisplay" class="absolute top-4 right-4 bg-slate-900/80 px-3 py-1 rounded text-xs font-mono text-slate-400 pointer-events-none border border-slate-700">
+            x: 0.00, y: 0.00
+        </div>
+
+        <!-- Floating Controls -->
+        <div class="absolute right-4 bottom-32 flex flex-col gap-2 z-10">
+            <button id="zoomIn" class="w-12 h-12 bg-slate-800/90 hover:bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg border border-slate-700 transition-all">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+            <button id="zoomOut" class="w-12 h-12 bg-slate-800/90 hover:bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg border border-slate-700 transition-all">
+                <i class="fa-solid fa-minus"></i>
+            </button>
+            <button id="resetView" class="w-12 h-12 bg-slate-800/90 hover:bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg border border-slate-700 transition-all">
+                <i class="fa-solid fa-crosshairs"></i>
+            </button>
+        </div>
+
+        <!-- Bottom Function Panel -->
+        <div class="glass-panel w-full absolute bottom-0 left-0 p-4 max-h-[40%] flex flex-col transition-transform duration-300" id="bottomPanel">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-sm font-medium text-slate-400 px-1">函數列表 (Functions)</span>
+                <button id="togglePanel" class="text-slate-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-chevron-down" id="panelChevron"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto no-scrollbar space-y-3" id="functionList">
+                <!-- Function Item 1 -->
+                <div class="flex items-center gap-3 bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                    <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
+                    <div class="flex-1 flex items-center text-lg math-font">
+                        <span class="text-slate-500 mr-2 italic">y =</span>
+                        <input type="text" value="sin(x)" class="bg-transparent border-none outline-none w-full text-indigo-300 placeholder-slate-600 function-input" placeholder="輸入函數...">
+                    </div>
+                    <button class="text-slate-500 hover:text-red-400 px-2"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                </div>
+
+                <!-- Function Item 2 -->
+                <div class="flex items-center gap-3 bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                    <div class="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
+                    <div class="flex-1 flex items-center text-lg math-font">
+                        <span class="text-slate-500 mr-2 italic">y =</span>
+                        <input type="text" value="x^2" class="bg-transparent border-none outline-none w-full text-indigo-300 placeholder-slate-600 function-input" placeholder="輸入函數...">
+                    </div>
+                    <button class="text-slate-500 hover:text-red-400 px-2"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                </div>
+            </div>
+
+            <button class="mt-4 w-full py-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-xl text-indigo-400 text-sm font-medium transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-plus"></i> 新增函數
+            </button>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation Bar (App standard) -->
+    <nav class="bg-slate-900 border-t border-slate-800 grid grid-cols-4 py-2 z-20">
+        <button data-goto="p2" class="flex flex-col items-center gap-1 text-slate-500">
+            <i class="fa-solid fa-calculator text-lg"></i>
+            <span class="text-[10px]">計算</span>
+        </button>
+        <button data-goto="p5" class="flex flex-col items-center gap-1 text-indigo-400">
+            <i class="fa-solid fa-chart-line text-lg"></i>
+            <span class="text-[10px]">繪圖</span>
+        </button>
+        <button data-goto="p4" class="flex flex-col items-center gap-1 text-slate-500">
+            <i class="fa-solid fa-arrow-right-arrow-left text-lg"></i>
+            <span class="text-[10px]">換算</span>
+        </button>
+        <button data-goto="p3" class="flex flex-col items-center gap-1 text-slate-500">
+            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+            <span class="text-[10px]">歷史</span>
+        </button>
+    </nav>
+
+    <script>
+        // Setup Canvas
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const coordDisplay = document.getElementById('coordDisplay');
+
+        let width, height;
+        let scale = 40; // Pixels per unit
+        let offsetX = 0; // Origin offset X
+        let offsetY = 0; // Origin offset Y
+        let isDragging = false;
+        let lastMousePos = { x: 0, y: 0 };
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            offsetX = width / 2;
+            offsetY = height / 2;
+            draw();
+        }
+
+        window.addEventListener('resize', resize);
+        setTimeout(resize, 0);
+
+        // Interaction
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMousePos = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Update mouse coordinates display
+            const mathX = (mouseX - offsetX) / scale;
+            const mathY = (offsetY - mouseY) / scale;
+            coordDisplay.innerText = `x: ${mathX.toFixed(2)}, y: ${mathY.toFixed(2)}`;
+
+            if (isDragging) {
+                offsetX += e.clientX - lastMousePos.x;
+                offsetY += e.clientY - lastMousePos.y;
+                lastMousePos = { x: e.clientX, y: e.clientY };
+                draw();
+            }
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        // Zoom logic
+        document.getElementById('zoomIn').onclick = () => { scale *= 1.2; draw(); };
+        document.getElementById('zoomOut').onclick = () => { scale /= 1.2; draw(); };
+        document.getElementById('resetView').onclick = () => { resize(); };
+
+        // Function Parser (Simplified for Prototype)
+        function evaluateFunction(funcStr, x) {
+            try {
+                // Safe basic math transformations
+                let expr = funcStr.toLowerCase()
+                    .replace(/sin/g, 'Math.sin')
+                    .replace(/cos/g, 'Math.cos')
+                    .replace(/tan/g, 'Math.tan')
+                    .replace(/log/g, 'Math.log10')
+                    .replace(/ln/g, 'Math.log')
+                    .replace(/sqrt/g, 'Math.sqrt')
+                    .replace(/\^/g, '**')
+                    .replace(/pi/g, 'Math.PI')
+                    .replace(/e/g, 'Math.E');
+                
+                // Using Function constructor for dynamic eval in prototype context
+                return new Function('x', `return ${expr}`)(x);
+            } catch (e) {
+                return NaN;
+            }
+        }
+
+        function drawGrid() {
+            const gridStep = scale;
+            const subGridStep = gridStep / 5;
+
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+
+            // Vertical Grid
+            for (let x = offsetX % gridStep; x < width; x += gridStep) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            // Horizontal Grid
+            for (let y = offsetY % gridStep; y < height; y += gridStep) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            // Axes
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            
+            // X-Axis
+            ctx.beginPath();
+            ctx.moveTo(0, offsetY);
+            ctx.lineTo(width, offsetY);
+            ctx.stroke();
+            
+            // Y-Axis
+            ctx.beginPath();
+            ctx.moveTo(offsetX, 0);
+            ctx.lineTo(offsetX, height);
+            ctx.stroke();
+
+            // Axis Markers
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px monospace';
+            ctx.fillText('0', offsetX + 5, offsetY - 5);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            drawGrid();
+
+            const functions = [
+                { expr: document.querySelectorAll('.function-input')[0].value, color: '#ef4444' },
+                { expr: document.querySelectorAll('.function-input')[1].value, color: '#3b82f6' }
+            ];
+
+            functions.forEach(fn => {
+                if (!fn.expr) return;
+                
+                ctx.beginPath();
+                ctx.strokeStyle = fn.color;
+                ctx.lineWidth = 3;
+                ctx.lineJoin = 'round';
+
+                let first = true;
+                for (let px = 0; px < width; px++) {
+                    const x = (px - offsetX) / scale;
+                    const y = evaluateFunction(fn.expr, x);
+                    
+                    if (isNaN(y) || !isFinite(y)) {
+                        first = true;
+                        continue;
+                    }
+
+                    const py = offsetY - (y * scale);
+                    
+                    if (first) {
+                        ctx.moveTo(px, py);
+                        first = false;
+                    } else {
+                        ctx.lineTo(px, py);
+                    }
+                }
+                ctx.stroke();
+            });
+        }
+
+        // Live input update
+        document.querySelectorAll('.function-input').forEach(input => {
+            input.addEventListener('input', draw);
+        });
+
+        // Toggle Panel UI
+        const toggleBtn = document.getElementById('togglePanel');
+        const bottomPanel = document.getElementById('bottomPanel');
+        const panelChevron = document.getElementById('panelChevron');
+        let panelOpen = true;
+
+        toggleBtn.onclick = () => {
+            panelOpen = !panelOpen;
+            if (panelOpen) {
+                bottomPanel.style.transform = 'translateY(0)';
+                panelChevron.className = 'fa-solid fa-chevron-down';
+            } else {
+                bottomPanel.style.transform = 'translateY(calc(100% - 48px))';
+                panelChevron.className = 'fa-solid fa-chevron-up';
+            }
+        };
+
+        // Navigation simulation
+        document.querySelectorAll('[data-goto]').forEach(el => {
+            el.addEventListener('click', () => {
+                const targetId = el.getAttribute('data-goto');
+                console.log(`Navigating to ${targetId}`);
+                // Simple opacity transition for proto
+                document.body.style.opacity = '0';
+                setTimeout(() => {
+                    location.reload(); // In real app, this would switch views
+                    // For the prompt, we just mock it
+                    document.body.style.opacity = '1';
+                }, 300);
+            });
+        });
+
+    </script>
+
+<script>
+  // Pro Prototype - Static Navigation Shim
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-goto]');
+      if (target) {
+        e.preventDefault();
+        const pageId = target.getAttribute('data-goto');
+        // Navigate to the corresponding HTML file
+        window.location.href = pageId + '.html';
+      }
+    });
+  });
+</script>
+</body>
+</html>
+```

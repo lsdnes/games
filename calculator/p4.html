@@ -1,0 +1,330 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單位換算器 - Unit Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .input-glow:focus { box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); border-color: #6366f1; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="p-6 flex items-center justify-between sticky top-0 z-50 glass">
+        <button data-goto="p2" class="p-2 hover:bg-slate-800 rounded-full transition-colors">
+            <i class="fa-solid fa-chevron-left text-xl"></i>
+        </button>
+        <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            單位換算器
+        </h1>
+        <button data-goto="p6" class="p-2 hover:bg-slate-800 rounded-full transition-colors">
+            <i class="fa-solid fa-gear text-xl"></i>
+        </button>
+    </header>
+
+    <main class="flex-1 max-w-lg mx-auto w-full px-4 py-6 space-y-8">
+        
+        <!-- Category Selector -->
+        <section class="overflow-x-auto no-scrollbar flex gap-4 pb-2">
+            <button onclick="changeCategory('length')" id="btn-length" class="category-btn flex flex-col items-center gap-2 min-w-[80px] p-4 rounded-2xl bg-indigo-600 text-white transition-all shadow-lg shadow-indigo-500/20">
+                <i class="fa-solid fa-ruler text-xl"></i>
+                <span class="text-xs font-medium">長度</span>
+            </button>
+            <button onclick="changeCategory('weight')" id="btn-weight" class="category-btn flex flex-col items-center gap-2 min-w-[80px] p-4 rounded-2xl bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">
+                <i class="fa-solid fa-weight-hanging text-xl"></i>
+                <span class="text-xs font-medium">重量</span>
+            </button>
+            <button onclick="changeCategory('area')" id="btn-area" class="category-btn flex flex-col items-center gap-2 min-w-[80px] p-4 rounded-2xl bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">
+                <i class="fa-solid fa-chart-area text-xl"></i>
+                <span class="text-xs font-medium">面積</span>
+            </button>
+            <button onclick="changeCategory('volume')" id="btn-volume" class="category-btn flex flex-col items-center gap-2 min-w-[80px] p-4 rounded-2xl bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">
+                <i class="fa-solid fa-cube text-xl"></i>
+                <span class="text-xs font-medium">體積</span>
+            </button>
+            <button onclick="changeCategory('temp')" id="btn-temp" class="category-btn flex flex-col items-center gap-2 min-w-[80px] p-4 rounded-2xl bg-slate-800 text-slate-400 hover:bg-slate-700 transition-all">
+                <i class="fa-solid fa-temperature-half text-xl"></i>
+                <span class="text-xs font-medium">溫度</span>
+            </button>
+        </section>
+
+        <!-- Converter Core -->
+        <div class="space-y-4">
+            <!-- Input 1 -->
+            <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 focus-within:border-indigo-500 transition-all">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-slate-500 text-sm font-medium">從</label>
+                    <select id="unit-from" onchange="convert('from')" class="bg-transparent text-indigo-400 font-bold focus:outline-none cursor-pointer">
+                        <!-- Options populated via JS -->
+                    </select>
+                </div>
+                <input type="number" id="input-from" value="1" oninput="convert('from')" class="w-full bg-transparent text-4xl font-semibold outline-none text-slate-100" placeholder="0">
+            </div>
+
+            <!-- Swap Button -->
+            <div class="flex justify-center -my-6 relative z-10">
+                <button onclick="swapUnits()" class="bg-indigo-600 p-4 rounded-full shadow-xl shadow-indigo-600/30 hover:scale-110 active:scale-95 transition-transform border-4 border-slate-950">
+                    <i class="fa-solid fa-repeat text-white text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Input 2 -->
+            <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 focus-within:border-purple-500 transition-all">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-slate-500 text-sm font-medium">到</label>
+                    <select id="unit-to" onchange="convert('from')" class="bg-transparent text-purple-400 font-bold focus:outline-none cursor-pointer">
+                        <!-- Options populated via JS -->
+                    </select>
+                </div>
+                <input type="number" id="input-to" oninput="convert('to')" class="w-full bg-transparent text-4xl font-semibold outline-none text-slate-100" placeholder="0">
+            </div>
+        </div>
+
+        <!-- Quick Reference List -->
+        <div class="space-y-4 pt-4">
+            <h3 class="text-slate-400 font-semibold text-sm uppercase tracking-wider px-2">常用換算參考</h3>
+            <div id="reference-list" class="grid grid-cols-2 gap-3">
+                <!-- Items populated via JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Navigation Bar -->
+    <nav class="glass border-t border-slate-800 p-4 sticky bottom-0 z-50">
+        <div class="max-w-md mx-auto flex justify-around items-center">
+            <button data-goto="p2" class="flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-400 transition-colors">
+                <i class="fa-solid fa-calculator text-xl"></i>
+                <span class="text-[10px]">計算</span>
+            </button>
+            <button data-goto="p4" class="flex flex-col items-center gap-1 text-indigo-400">
+                <div class="relative">
+                    <i class="fa-solid fa-arrows-rotate text-xl"></i>
+                    <div class="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full"></div>
+                </div>
+                <span class="text-[10px] font-bold">單位</span>
+            </button>
+            <button data-goto="p5" class="flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-400 transition-colors">
+                <i class="fa-solid fa-chart-line text-xl"></i>
+                <span class="text-[10px]">繪圖</span>
+            </button>
+            <button data-goto="p3" class="flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-400 transition-colors">
+                <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+                <span class="text-[10px]">歷史</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // Data Configuration
+        const units = {
+            length: {
+                units: {
+                    m: { name: '公尺 (m)', factor: 1 },
+                    km: { name: '公里 (km)', factor: 1000 },
+                    cm: { name: '公分 (cm)', factor: 0.01 },
+                    mm: { name: '公釐 (mm)', factor: 0.001 },
+                    inch: { name: '英吋 (in)', factor: 0.0254 },
+                    ft: { name: '英尺 (ft)', factor: 0.3048 },
+                    yd: { name: '碼 (yd)', factor: 0.9144 },
+                    mi: { name: '英里 (mi)', factor: 1609.34 }
+                },
+                default: ['m', 'km']
+            },
+            weight: {
+                units: {
+                    kg: { name: '公斤 (kg)', factor: 1 },
+                    g: { name: '公克 (g)', factor: 0.001 },
+                    mg: { name: '毫克 (mg)', factor: 0.000001 },
+                    lb: { name: '磅 (lb)', factor: 0.453592 },
+                    oz: { name: '盎司 (oz)', factor: 0.0283495 }
+                },
+                default: ['kg', 'lb']
+            },
+            area: {
+                units: {
+                    m2: { name: '平方米 (m²)', factor: 1 },
+                    km2: { name: '平方公里 (km²)', factor: 1000000 },
+                    ha: { name: '公頃 (ha)', factor: 10000 },
+                    acre: { name: '英畝', factor: 4046.86 },
+                    ft2: { name: '平方英尺 (ft²)', factor: 0.092903 }
+                },
+                default: ['m2', 'ha']
+            },
+            volume: {
+                units: {
+                    l: { name: '公升 (L)', factor: 1 },
+                    ml: { name: '毫升 (mL)', factor: 0.001 },
+                    m3: { name: '立方米 (m³)', factor: 1000 },
+                    gal: { name: '加侖 (US)', factor: 3.78541 },
+                    cup: { name: '杯 (US)', factor: 0.236588 }
+                },
+                default: ['l', 'ml']
+            },
+            temp: {
+                units: {
+                    c: { name: '攝氏 (°C)', factor: 1 },
+                    f: { name: '華氏 (°F)', factor: null },
+                    k: { name: '克氏 (K)', factor: null }
+                },
+                default: ['c', 'f']
+            }
+        };
+
+        let currentCategory = 'length';
+
+        // Initialization
+        window.onload = () => {
+            changeCategory('length');
+            setupNavigation();
+        };
+
+        function changeCategory(cat) {
+            currentCategory = cat;
+            
+            // Update UI tabs
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-500/20');
+                btn.classList.add('bg-slate-800', 'text-slate-400');
+            });
+            const activeBtn = document.getElementById(`btn-${cat}`);
+            activeBtn.classList.remove('bg-slate-800', 'text-slate-400');
+            activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-500/20');
+
+            // Populate Dropdowns
+            const fromSelect = document.getElementById('unit-from');
+            const toSelect = document.getElementById('unit-to');
+            fromSelect.innerHTML = '';
+            toSelect.innerHTML = '';
+
+            Object.keys(units[cat].units).forEach(key => {
+                const opt1 = new Option(units[cat].units[key].name, key);
+                const opt2 = new Option(units[cat].units[key].name, key);
+                fromSelect.add(opt1);
+                toSelect.add(opt2);
+            });
+
+            fromSelect.value = units[cat].default[0];
+            toSelect.value = units[cat].default[1];
+
+            // Initial convert
+            convert('from');
+            renderReference();
+        }
+
+        function convert(direction) {
+            const cat = units[currentCategory];
+            const fromUnit = document.getElementById('unit-from').value;
+            const toUnit = document.getElementById('unit-to').value;
+            const fromInput = document.getElementById('input-from');
+            const toInput = document.getElementById('input-to');
+
+            let val;
+            if (direction === 'from') {
+                val = parseFloat(fromInput.value);
+                if (isNaN(val)) { toInput.value = ''; return; }
+                toInput.value = calculate(val, fromUnit, toUnit, currentCategory).toFixed(4).replace(/\.?0+$/, "");
+            } else {
+                val = parseFloat(toInput.value);
+                if (isNaN(val)) { fromInput.value = ''; return; }
+                fromInput.value = calculate(val, toUnit, fromUnit, currentCategory).toFixed(4).replace(/\.?0+$/, "");
+            }
+            renderReference();
+        }
+
+        function calculate(value, from, to, catKey) {
+            if (catKey === 'temp') {
+                // Special Temp Logic
+                let celsius;
+                if (from === 'c') celsius = value;
+                else if (from === 'f') celsius = (value - 32) * 5/9;
+                else if (from === 'k') celsius = value - 273.15;
+
+                if (to === 'c') return celsius;
+                if (to === 'f') return (celsius * 9/5) + 32;
+                if (to === 'k') return celsius + 273.15;
+                return value;
+            }
+
+            const cat = units[catKey];
+            const baseValue = value * cat.units[from].factor;
+            return baseValue / cat.units[to].factor;
+        }
+
+        function swapUnits() {
+            const fromSelect = document.getElementById('unit-from');
+            const toSelect = document.getElementById('unit-to');
+            const temp = fromSelect.value;
+            fromSelect.value = toSelect.value;
+            toSelect.value = temp;
+            convert('from');
+        }
+
+        function renderReference() {
+            const list = document.getElementById('reference-list');
+            list.innerHTML = '';
+            const val = parseFloat(document.getElementById('input-from').value) || 0;
+            const fromUnit = document.getElementById('unit-from').value;
+            const catUnits = units[currentCategory].units;
+
+            let count = 0;
+            for (let key in catUnits) {
+                if (key === fromUnit || count >= 6) continue;
+                
+                const result = calculate(val, fromUnit, key, currentCategory).toFixed(3).replace(/\.?0+$/, "");
+                const card = `
+                    <div class="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                        <span class="text-indigo-400 font-bold text-lg">${result}</span>
+                        <span class="text-slate-500 text-[10px] mt-1 truncate w-full">${catUnits[key].name}</span>
+                    </div>
+                `;
+                list.innerHTML += card;
+                count++;
+            }
+        }
+
+        // Navigation Engine
+        function setupNavigation() {
+            document.querySelectorAll('[data-goto]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const target = el.getAttribute('data-goto');
+                    console.log('Navigating to:', target);
+                    // In a real app, this would handle page transitions
+                    // For this prototype, we'll just flash the screen
+                    document.body.classList.add('opacity-0');
+                    setTimeout(() => {
+                        document.body.classList.remove('opacity-0');
+                        alert(`導航到頁面: ${target} (僅為 prototype 演示)`);
+                    }, 200);
+                });
+            });
+        }
+    </script>
+
+<script>
+  // Pro Prototype - Static Navigation Shim
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-goto]');
+      if (target) {
+        e.preventDefault();
+        const pageId = target.getAttribute('data-goto');
+        // Navigate to the corresponding HTML file
+        window.location.href = pageId + '.html';
+      }
+    });
+  });
+</script>
+</body>
+</html>
+
+```

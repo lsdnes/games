@@ -1,0 +1,284 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>歷史記錄 (Calculation History)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .record-item:active {
+            transform: scale(0.98);
+            background: rgba(51, 65, 85, 0.8);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col max-w-md mx-auto relative overflow-hidden">
+
+    <!-- Header Section -->
+    <header class="sticky top-0 z-20 px-6 py-5 flex items-center justify-between glass-card border-t-0 border-x-0">
+        <button data-goto="p2" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-800 transition-colors">
+            <i class="fa-solid fa-chevron-left text-lg"></i>
+        </button>
+        <h1 class="text-xl font-bold tracking-tight">歷史記錄</h1>
+        <button id="clear-history" class="text-sm font-medium text-rose-400 hover:text-rose-300 transition-colors px-3 py-1 rounded-lg hover:bg-rose-500/10">
+            清空
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar px-4 pt-4 pb-24">
+        
+        <!-- Search/Filter Bar -->
+        <div class="mb-6 relative">
+            <span class="absolute inset-y-0 left-3 flex items-center text-slate-500">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </span>
+            <input type="text" placeholder="搜尋計算過程..." class="w-full bg-slate-900/50 border border-slate-700 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all">
+        </div>
+
+        <div class="space-y-4" id="history-container">
+            <!-- Section: Today -->
+            <div>
+                <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2">今天</h2>
+                
+                <!-- History Item 1 -->
+                <div data-goto="p2" class="record-item glass-card p-4 rounded-2xl mb-3 cursor-pointer transition-all">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs text-slate-500">14:32</span>
+                        <button class="text-slate-500 hover:text-blue-400 p-1"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <div class="text-slate-400 text-sm font-light mb-1">25.4 × 12 + log(100)</div>
+                    <div class="text-2xl font-semibold text-white">306.8</div>
+                </div>
+
+                <!-- History Item 2 -->
+                <div data-goto="p2" class="record-item glass-card p-4 rounded-2xl mb-3 cursor-pointer transition-all">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs text-slate-500">11:05</span>
+                        <button class="text-slate-500 hover:text-blue-400 p-1"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <div class="text-slate-400 text-sm font-light mb-1">√(144) × sin(45°)</div>
+                    <div class="text-2xl font-semibold text-white">8.485281</div>
+                </div>
+            </div>
+
+            <!-- Section: Yesterday -->
+            <div class="pt-2">
+                <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2">昨天</h2>
+                
+                <!-- History Item 3 -->
+                <div data-goto="p2" class="record-item glass-card p-4 rounded-2xl mb-3 cursor-pointer transition-all">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs text-slate-500">昨天 18:20</span>
+                        <button class="text-slate-500 hover:text-blue-400 p-1"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <div class="text-slate-400 text-sm font-light mb-1">5000 / (1 + 0.05)^5</div>
+                    <div class="text-2xl font-semibold text-white">3917.63</div>
+                </div>
+
+                <!-- History Item 4 -->
+                <div data-goto="p2" class="record-item glass-card p-4 rounded-2xl mb-3 cursor-pointer transition-all">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs text-slate-500">昨天 09:15</span>
+                        <button class="text-slate-500 hover:text-blue-400 p-1"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <div class="text-slate-400 text-sm font-light mb-1">∫(x²) dx from 0 to 3</div>
+                    <div class="text-2xl font-semibold text-white">9</div>
+                </div>
+            </div>
+
+            <!-- Section: Earlier -->
+            <div class="pt-2">
+                <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-2">更早之前</h2>
+                
+                <!-- History Item 5 -->
+                <div data-goto="p2" class="record-item glass-card p-4 rounded-2xl mb-3 cursor-pointer transition-all">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs text-slate-500">10月24日</span>
+                        <button class="text-slate-500 hover:text-blue-400 p-1"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <div class="text-slate-400 text-sm font-light mb-1">π × 5²</div>
+                    <div class="text-2xl font-semibold text-white">78.5398</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tip Overlay -->
+        <div class="mt-8 text-center">
+            <p class="text-xs text-slate-600">提示：點擊記錄可重新載入到計算機，長按記錄可快速複製結果。</p>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation (Floating) -->
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm glass-card rounded-3xl p-2 flex justify-around items-center shadow-2xl z-30">
+        <button data-goto="p2" class="flex flex-col items-center p-3 text-slate-500 hover:text-blue-400 transition-colors">
+            <i class="fa-solid fa-calculator text-lg"></i>
+            <span class="text-[10px] mt-1 font-medium">計算</span>
+        </button>
+        <button data-goto="p3" class="flex flex-col items-center p-3 text-blue-500 bg-blue-500/10 rounded-2xl">
+            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+            <span class="text-[10px] mt-1 font-medium">歷史</span>
+        </button>
+        <button data-goto="p5" class="flex flex-col items-center p-3 text-slate-500 hover:text-blue-400 transition-colors">
+            <i class="fa-solid fa-chart-line text-lg"></i>
+            <span class="text-[10px] mt-1 font-medium">繪圖</span>
+        </button>
+        <button data-goto="p4" class="flex flex-col items-center p-3 text-slate-500 hover:text-blue-400 transition-colors">
+            <i class="fa-solid fa-arrow-right-arrow-left text-lg"></i>
+            <span class="text-[10px] mt-1 font-medium">換算</span>
+        </button>
+        <button data-goto="p6" class="flex flex-col items-center p-3 text-slate-500 hover:text-blue-400 transition-colors">
+            <i class="fa-solid fa-gear text-lg"></i>
+            <span class="text-[10px] mt-1 font-medium">設置</span>
+        </button>
+    </nav>
+
+    <!-- Success Toast (Hidden) -->
+    <div id="copy-toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium opacity-0 pointer-events-none transition-all duration-300 shadow-lg">
+        已複製到剪貼簿
+    </div>
+
+    <!-- Clear Confirmation Modal (Hidden) -->
+    <div id="clear-modal" class="fixed inset-0 z-50 flex items-center justify-center p-6 hidden">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
+        <div class="relative glass-card p-6 rounded-3xl w-full max-w-xs shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 class="text-xl font-bold mb-2">清空歷史記錄？</h3>
+            <p class="text-slate-400 text-sm mb-6">此操作將永久刪除所有過去的運算記錄，無法還原。</p>
+            <div class="flex gap-3">
+                <button id="cancel-clear" class="flex-1 py-3 rounded-2xl bg-slate-800 font-medium hover:bg-slate-700 transition-colors">取消</button>
+                <button id="confirm-clear" class="flex-1 py-3 rounded-2xl bg-rose-600 font-medium hover:bg-rose-500 transition-colors">確定清空</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple UI Interaction Logic
+        
+        // Modal Logic
+        const clearBtn = document.getElementById('clear-history');
+        const modal = document.getElementById('clear-modal');
+        const cancelBtn = document.getElementById('cancel-clear');
+        const confirmBtn = document.getElementById('confirm-clear');
+
+        clearBtn.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+
+        confirmBtn.addEventListener('click', () => {
+            document.getElementById('history-container').innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 text-slate-600">
+                    <i class="fa-solid fa-box-open text-5xl mb-4"></i>
+                    <p>尚無歷史記錄</p>
+                </div>
+            `;
+            modal.classList.add('hidden');
+        });
+
+        // Copy Simulation
+        const copyBtns = document.querySelectorAll('.fa-copy');
+        const toast = document.getElementById('copy-toast');
+
+        copyBtns.forEach(btn => {
+            btn.parentElement.addEventListener('click', (e) => {
+                e.stopPropagation(); // Don't trigger the page change
+                toast.classList.remove('opacity-0', 'translate-y-2');
+                toast.classList.add('opacity-100', '-translate-y-2');
+                
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    toast.classList.remove('opacity-100', '-translate-y-2');
+                }, 2000);
+            });
+        });
+
+        // Mock Navigation Handler
+        document.querySelectorAll('[data-goto]').forEach(el => {
+            el.addEventListener('click', (e) => {
+                const target = el.getAttribute('data-goto');
+                console.log(`Navigating to: ${target}`);
+                // In a real app, logic to switch pages would go here
+                // For this prototype, we just alert or visually react
+                if(target !== 'p3') {
+                    document.body.style.opacity = '0';
+                    setTimeout(() => {
+                        // Normally window.location or SPA router call
+                        alert(`跳轉至頁面 ID: ${target}`);
+                        document.body.style.opacity = '1';
+                    }, 300);
+                }
+            });
+        });
+
+        // Long press simulation (Simplified)
+        let pressTimer;
+        document.querySelectorAll('.record-item').forEach(item => {
+            item.addEventListener('mousedown', () => {
+                pressTimer = window.setTimeout(() => {
+                    toast.innerText = "已複製結果";
+                    toast.classList.remove('opacity-0');
+                    setTimeout(() => toast.classList.add('opacity-0'), 1500);
+                }, 800);
+            });
+            item.addEventListener('mouseup', () => clearTimeout(pressTimer));
+            item.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+            
+            // Touch versions
+            item.addEventListener('touchstart', () => {
+                pressTimer = window.setTimeout(() => {
+                    toast.innerText = "已複製結果";
+                    toast.classList.remove('opacity-0');
+                    setTimeout(() => toast.classList.add('opacity-0'), 1500);
+                }, 800);
+            });
+            item.addEventListener('touchend', () => clearTimeout(pressTimer));
+        });
+    </script>
+
+<script>
+  // Pro Prototype - Static Navigation Shim
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-goto]');
+      if (target) {
+        e.preventDefault();
+        const pageId = target.getAttribute('data-goto');
+        // Navigate to the corresponding HTML file
+        window.location.href = pageId + '.html';
+      }
+    });
+  });
+</script>
+</body>
+</html>
+```

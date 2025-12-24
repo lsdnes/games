@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "topic": "設計一個科學計算機的app",
+  "createdAt": "2025-12-24T05:32:40.971Z",
+  "pages": [
+    {
+      "id": "p1",
+      "title": "啟動畫面 (Splash Screen)",
+      "description": "展示簡約的科學計算機 App 圖示與品牌名稱。背景採用科技感的深藍色，帶有微弱的數學公式浮水印，數秒後自動進入主計算界面。",
+      "status": "completed",
+      "suggestedNavigation": [
+        "p2"
+      ]
+    },
+    {
+      "id": "p2",
+      "title": "科學計算機主界面 (Main Calculator)",
+      "description": "核心功能頁面。包含大型顯示區（分兩行顯示表達式與結果）、數字鍵盤、基本運算符，以及可摺疊或側滑切換的科學運算符鍵盤（含三角函數、對數、乘方、根號）。頂部有歷史記錄與設置的入口。",
+      "status": "completed",
+      "suggestedNavigation": [
+        "p3",
+        "p4",
+        "p5",
+        "p6"
+      ]
+    },
+    {
+      "id": "p3",
+      "title": "歷史記錄 (Calculation History)",
+      "description": "以列表形式展示過去的運算過程與結果。用戶可以點擊某一條記錄將其重新載入到主界面，或長按進行複製，並提供「清空歷史」按鈕。",
+      "status": "completed",
+      "suggestedNavigation": [
+        "p2"
+      ]
+    },
+    {
+      "id": "p4",
+      "title": "單位換算器 (Unit Converter)",
+      "description": "提供長度、重量、面積、體積及溫度等常見單位換算。頂部為類別選擇器，中間為兩個輸入框與下拉選單，支持實時換算。",
+      "status": "completed",
+      "suggestedNavigation": [
+        "p2"
+      ]
+    },
+    {
+      "id": "p5",
+      "title": "函數繪圖 (Graphing Calculator)",
+      "description": "輸入數學函數（如 y=sin(x)）並在座標系中實時繪製曲線。支持多指縮放與拖拽查看坐標點細節。",
+      "status": "completed",
+      "suggestedNavigation": [
+        "p2"
+      ]
+    },
+    {
+      "id": "p6",
+      "title": "設置與偏好 (Settings)",
+      "description": "用戶自定義選項。包括主題切換（深色/淺色/透明）、計算精度（小數點位數）、角度單位（角度/弧度）以及震動反饋開關。",
+      "status": "completed",
+      "suggestedNavigation": [
+        "p2"
+      ]
+    }
+  ]
+}
