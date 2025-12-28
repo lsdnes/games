@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天吃什麼？拉霸大挑戰</title>
+    <!-- 使用 Tailwind CSS 進行快速樣式設定 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #1a1a1a;
+            touch-action: manipulation;
+            background-image: radial-gradient(circle at center, #2a2a2a 0%, #000000 100%);
+        }
+        
+        /* 機台外框金屬質感 */
+        .slot-machine-frame {
+            background: linear-gradient(135deg, #e2e2e2 0%, #9b9b9b 50%, #e2e2e2 100%);
+            box-shadow: 
+                0 0 0 10px #333,
+                0 0 50px rgba(0,0,0,0.8),
+                inset 0 0 20px rgba(0,0,0,0.5);
+            border-radius: 20px;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* 螢幕邊框 */
+        .screen-bezel {
+            background: #000;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,1);
+            border: 4px solid #444;
+        }
+
+        /* 霓虹燈效果 */
+        .title-glow {
+            color: #fff;
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #ff00de,
+                0 0 20px #ff00de,
+                0 0 40px #ff00de;
+        }
+        
+        /* 按鈕特效 */
+        .spin-btn {
+            background: radial-gradient(circle at 30% 30%, #ffeb3b, #fbc02d);
+            box-shadow: 
+                0 6px 0 #f57f17,
+                0 15px 20px rgba(0,0,0,0.4),
+                inset 0 2px 5px rgba(255,255,255,0.5);
+            transition: all 0.1s;
+        }
+        .spin-btn:active {
+            transform: translateY(6px);
+            box-shadow: 
+                0 0 0 #f57f17,
+                inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .spin-btn:disabled {
+            background: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+            filter: grayscale(100%);
+        }
+
+        /* 滾輪視窗遮罩 */
+        .reel-window {
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+            /* 內陰影造成立體感 */
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.8), inset 0 -10px 20px rgba(0,0,0,0.8);
+        }
+
+        /* 主持人圖片外框 */
+        .host-frame {
+            background: linear-gradient(45deg, #ffd700, #b8860b);
+            padding: 5px;
+            border-radius: 100%;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- 標題區 -->
+    <div class="mb-8 text-center">
+        <h1 class="text-4xl md:text-6xl font-black title-glow tracking-wider mb-2">
+            今天吃什麼？
+        </h1>
+        <!-- 更新標題文字 -->
+        <p class="text-gray-400 text-sm md:text-base">專治餓人 • 美食拉霸機</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row items-center justify-center gap-8 w-full max-w-6xl">
+        
+        <!-- 左側：主持人 (桌面版) -->
+        <div class="hidden lg:flex flex-col items-center w-1/4">
+            <div class="host-frame w-48 h-48 relative overflow-hidden bg-gray-800">
+                <img id="host-img-desktop" src="" alt="主持人" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('host-fallback').style.display='flex'">
+                <div id="host-fallback" class="hidden absolute inset-0 flex items-center justify-center bg-gray-800 text-white flex-col">
+                    <span class="text-4xl">🎤</span>
+                    <span class="text-xs mt-2">主持人</span>
+                </div>
+            </div>
+            <div class="mt-4 bg-gray-800 text-yellow-400 px-6 py-2 rounded-full font-bold border border-yellow-500 shadow-lg text-center">
+                <p class="text-xs text-gray-400">本局主持人</p>
+                <p id="host-name-desktop" class="text-lg">美食顧問</p>
+            </div>
+            
+            <!-- 新增更換主持人按鈕 -->
+            <button onclick="setRandomHost()" class="mt-3 text-gray-500 text-xs hover:text-yellow-400 flex items-center gap-1 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                更換主持人
+            </button>
+        </div>
+
+        <!-- 中間：拉霸機台 -->
+        <div class="slot-machine-frame w-full max-w-3xl">
+            <!-- 機台頂部裝飾 -->
+            <div class="flex justify-between items-center mb-4 px-2">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_red]"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500 animate-pulse delay-75 shadow-[0_0_8px_yellow]"></div>
+                </div>
+                <div class="text-gray-600 font-mono text-xs font-bold">SLOT-2024-FOOD</div>
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse delay-150 shadow-[0_0_8px_lime]"></div>
+                    <div class="w-3 h-3 rounded-full bg-blue-500 animate-pulse delay-200 shadow-[0_0_8px_blue]"></div>
+                </div>
+            </div>
+
+            <!-- 螢幕區 -->
+            <div class="screen-bezel bg-black relative">
+                <!-- 中獎線 (紅色橫線) -->
+                <div class="absolute top-1/2 left-0 w-full h-1 bg-red-500/50 z-10 pointer-events-none transform -translate-y-1/2 shadow-[0_0_10px_red]"></div>
+                <!-- 左右箭頭指示 -->
+                <div class="absolute top-1/2 -left-3 transform -translate-y-1/2 text-red-500 text-2xl font-bold z-20">▶</div>
+                <div class="absolute top-1/2 -right-3 transform -translate-y-1/2 text-red-500 text-2xl font-bold z-20">◀</div>
+
+                <!-- Canvas -->
+                <div class="reel-window rounded border-2 border-gray-700 h-[250px]">
+                    <canvas id="slotCanvas" width="900" height="250" class="w-full h-full block object-contain"></canvas>
+                </div>
+            </div>
+
+            <!-- 控制面板區 -->
+            <div class="mt-6 flex flex-col md:flex-row justify-between items-center gap-4 px-4">
+                
+                <!-- 資訊顯示 -->
+                <div class="bg-black/80 rounded-lg p-3 border border-gray-600 w-full md:w-auto text-center min-w-[120px]">
+                    <div class="text-gray-400 text-xs uppercase tracking-widest">ROUND</div>
+                    <div id="roundCount" class="text-red-500 font-mono text-2xl font-bold glow-text">0</div>
+                </div>
+
+                <!-- 啟動按鈕 -->
+                <button id="spinBtn" class="spin-btn rounded-full w-24 h-24 md:w-32 md:h-32 flex items-center justify-center relative group">
+                    <span class="text-red-900 font-black text-xl md:text-2xl group-hover:scale-110 transition-transform">SPIN</span>
+                </button>
+
+                <!-- 狀態顯示 -->
+                <div class="bg-black/80 rounded-lg p-3 border border-gray-600 w-full md:w-auto text-center min-w-[120px]">
+                    <div class="text-gray-400 text-xs uppercase tracking-widest">STATUS</div>
+                    <div id="statusText" class="text-yellow-400 font-mono text-sm font-bold">READY</div>
+                </div>
+            </div>
+            
+            <!-- 手機版主持人 (顯示在下方) -->
+            <div class="lg:hidden mt-4 flex items-center gap-3 bg-gray-800 p-2 rounded-lg border border-gray-700 relative">
+                <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-yellow-500">
+                    <img id="host-img-mobile" src="" class="w-full h-full object-cover">
+                </div>
+                <div class="text-white flex-grow">
+                    <div class="text-xs text-yellow-500">主持人</div>
+                    <div class="font-bold">美食顧問</div>
+                </div>
+                <!-- 手機版更換按鈕 -->
+                <button onclick="setRandomHost()" class="p-2 text-gray-400 hover:text-white bg-gray-700 rounded-full" title="更換主持人">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果彈窗 -->
+    <div id="resultModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-1 max-w-md w-[90%] transform scale-90 transition-transform duration-300">
+            <div class="bg-gradient-to-b from-red-600 to-red-800 rounded-xl p-8 text-center border-4 border-yellow-400 shadow-[0_0_50px_rgba(255,0,0,0.5)]">
+                <h2 class="text-4xl font-black text-white mb-2 drop-shadow-lg">🎉 中獎啦！ 🎉</h2>
+                <div class="text-yellow-200 text-lg mb-4">今天的美食是...</div>
+                
+                <div class="bg-white rounded-lg p-4 mb-6 shadow-inner transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                    <div id="resultImageContainer" class="w-full h-48 flex items-center justify-center overflow-hidden rounded mb-2 bg-gray-100">
+                        <!-- JS 插入圖片 -->
+                    </div>
+                    <div id="resultFoodName" class="text-3xl font-bold text-gray-800"></div>
+                </div>
+                
+                <button onclick="closeModal()" class="w-full py-4 bg-yellow-400 hover:bg-yellow-300 text-red-900 rounded-xl font-black text-xl shadow-[0_4px_0_#b45309] active:shadow-none active:translate-y-[4px] transition-all">
+                    再選一次
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+/**
+ * 食物與資料設定
+ */
+const foodData = {
+    "food1": "水餃", "food2": "蚵仔麵線", "food3": "魯肉飯", "food4": "義大利麵", "food5": "披薩",
+    "food6": "豬腳飯", "food7": "牛肉麵", "food8": "肉圓", "food9": "乾麵", "food10": "貢丸湯",
+    "food11": "漢堡", "food12": "壽司", "food13": "炸雞", "food14": "涼麵", "food15": "排骨飯",
+    "food16": "沙拉", "food17": "鹹酥雞", "food18": "鯖魚飯", "food19": "燙青菜", "food20": "吃火鍋",
+    "food21": "吃拉麵"
+};
+
+const canvas = document.getElementById('slotCanvas');
+const ctx = canvas.getContext('2d');
+const spinBtn = document.getElementById('spinBtn');
+const roundCountEl = document.getElementById('roundCount');
+const statusText = document.getElementById('statusText');
+const resultModal = document.getElementById('resultModal');
+const resultFoodName = document.getElementById('resultFoodName');
+const resultImageContainer = document.getElementById('resultImageContainer');
+
+// 遊戲參數
+const TOTAL_FOODS = 21;
+// 隨機決定本輪要玩幾次才會中獎 (1~6)
+let targetWinRound = Math.floor(Math.random() * 6) + 1;
+
+// 版面設定
+const CANVAS_WIDTH = 900;
+const CANVAS_HEIGHT = 250;
+const REEL_COUNT = 3;
+const SYMBOL_WIDTH = CANVAS_WIDTH / REEL_COUNT; // 300
+const SYMBOL_HEIGHT = CANVAS_HEIGHT; // 250 (Full height)
+
+let assets = {};
+let hostImages = []; // 儲存"成功載入"的圖片檔名
+let reels = [];
+let isSpinning = false;
+let roundCounter = 0;
+let animationId;
+let particles = [];
+let failSafeTimeout = null;
+
+// 音效 Context
+let audioCtx = null;
+
+/**
+ * 簡易音效合成器 (不依賴外部檔案)
+ */
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function playSound(type) {
+    if (!audioCtx) return;
+    
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    const now = audioCtx.currentTime;
+
+    if (type === 'spin') {
+        // 馬達轉動聲 (低頻快速重複)
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(100, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+        gainNode.gain.setValueAtTime(0.05, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+    } 
+    else if (type === 'stop') {
+        // 停止聲 (清脆)
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+    } 
+    else if (type === 'win') {
+        // 中獎音樂 (簡單琶音)
+        const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50]; // C Major arpeggio
+        let time = now;
+        notes.forEach((freq, i) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g);
+            g.connect(audioCtx.destination);
+            
+            o.type = 'sine';
+            o.frequency.value = freq;
+            
+            g.gain.setValueAtTime(0.1, time);
+            g.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+            
+            o.start(time);
+            o.stop(time + 0.3);
+            time += 0.15;
+        });
+    }
+}
+
+/**
+ * 資源載入
+ */
+async function loadAssets() {
+    const promises = [];
+    
+    // 載入食物圖片 (更新路徑為 jpg/)
+    for (let i = 1; i <= TOTAL_FOODS; i++) {
+        const id = `food${i}`;
+        const p = new Promise((resolve) => {
+            const img = new Image();
+            img.src = `jpg/${id}.jpg`;
+            img.onload = () => resolve({ id, img, status: 'ok' });
+            img.onerror = () => resolve({ id, img: null, status: 'error' });
+        }).then(data => {
+            assets[data.id] = data;
+        });
+        promises.push(p);
+    }
+    
+    // 載入主持人圖片 (1-11) (更新路徑為 jpg/)
+    for (let i = 1; i <= 11; i++) {
+         const fname = `jpg/P${i}.jpg`;
+         const p = new Promise((resolve) => {
+            const img = new Image();
+            img.src = fname;
+            // 我們只關心哪些檔案真正存在
+            img.onload = () => resolve(fname);
+            img.onerror = () => resolve(null);
+        }).then(validName => {
+            if(validName) hostImages.push(validName);
+        });
+        promises.push(p);
+    }
+
+    await Promise.all(promises);
+    setRandomHost();
+    initGame();
+}
+
+function setRandomHost() {
+    let filename = 'jpg/P1.jpg'; // 預設值 (路徑更新)
+    
+    // 如果有成功載入任何圖片，從中隨機選一張
+    if (hostImages.length > 0) {
+        filename = hostImages[Math.floor(Math.random() * hostImages.length)];
+    }
+    
+    const dImg = document.getElementById('host-img-desktop');
+    const mImg = document.getElementById('host-img-mobile');
+    
+    // 重置顯示屬性
+    dImg.style.display = 'block';
+    document.getElementById('host-fallback').style.display = 'none';
+    mImg.style.display = 'block';
+    
+    // 設定圖片路徑
+    dImg.src = filename;
+    mImg.src = filename;
+}
+
+/**
+ * 滾輪邏輯 (單排顯示)
+ */
+class Reel {
+    constructor(index) {
+        this.index = index;
+        this.x = index * SYMBOL_WIDTH;
+        // 我們需要一個偏移量來模擬滾動
+        // offset 0 = 完美居中
+        this.offsetY = 0; 
+        this.speed = 0;
+        this.isStopping = false;
+        this.currentId = this.getRandomFoodId();
+        this.nextId = this.getRandomFoodId();
+        this.targetId = null;
+        this.isLocked = false; // 新增鎖定狀態
+    }
+
+    getRandomFoodId() {
+        return `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+    }
+
+    start() {
+        this.speed = 40; // 固定高速，不使用隨機速度避免不同步
+        this.isStopping = false;
+        this.isLocked = false;
+        this.targetId = null;
+    }
+
+    stop(target) {
+        this.isStopping = true;
+        this.targetId = target;
+    }
+
+    update() {
+        if (this.isLocked) return; // 已經鎖定就不動
+
+        if (this.speed > 0) {
+            this.offsetY += this.speed;
+            
+            // 當移動超過一個符號的高度時 (切換到下一個圖)
+            if (this.offsetY >= SYMBOL_HEIGHT) {
+                this.offsetY = 0; // 強制歸零，不使用減法，避免浮點數誤差
+                this.currentId = this.nextId;
+                
+                // 如果正在停止狀態
+                if (this.isStopping) {
+                    // 如果剛剛滑下來的這個(現在變成current) 就是目標
+                    if (this.currentId === this.targetId) {
+                        // 完美停止！
+                        this.speed = 0;
+                        this.isLocked = true;
+                        playSound('stop');
+                        return;
+                    } 
+                    // 如果不是目標，那下一個必須是目標
+                    else {
+                        this.nextId = this.targetId;
+                    }
+                } else {
+                    // 還沒停止，下一個繼續隨機
+                    this.nextId = this.getRandomFoodId();
+                }
+                
+                // 播放轉動音效 (每轉過一個圖)
+                if (isSpinning) playSound('spin');
+            }
+        }
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.beginPath();
+        // 裁切該滾輪區域
+        ctx.rect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
+        ctx.clip();
+
+        // 繪製背景條紋 (增加動感)
+        ctx.fillStyle = this.index % 2 === 0 ? '#fafafa' : '#f0f0f0';
+        ctx.fillRect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
+
+        // 繪製 Current (中間/下方)
+        // 這裡的邏輯：offsetY 增加，圖片往下跑。
+        // 當 offsetY = 0, current 在正中間。
+        const yCurrent = this.offsetY; 
+        const yNext = this.offsetY - SYMBOL_HEIGHT;
+        
+        this.drawSymbol(ctx, this.currentId, this.x, yCurrent);
+        this.drawSymbol(ctx, this.nextId, this.x, yNext);
+
+        // 內部陰影 (立體感)
+        const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+        grad.addColorStop(0, 'rgba(0,0,0,0.3)');
+        grad.addColorStop(0.1, 'rgba(0,0,0,0)');
+        grad.addColorStop(0.9, 'rgba(0,0,0,0)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.3)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
+        
+        // 邊框線
+        ctx.strokeStyle = '#ddd';
+        ctx.strokeRect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
+
+        ctx.restore();
+    }
+
+    drawSymbol(ctx, id, x, y) {
+        const asset = assets[id];
+        // 圖片稍微縮小留邊距
+        const padding = 20;
+        const w = SYMBOL_WIDTH - padding * 2;
+        const h = SYMBOL_HEIGHT - padding * 2;
+        const cx = x + padding;
+        const cy = y + padding;
+
+        if (asset && asset.img) {
+            // 動態模糊效果
+            if (this.speed > 0 && !this.isLocked) { // 只要在動就模糊
+                ctx.save();
+                ctx.filter = `blur(0px)`; 
+                // 拉伸圖片模擬模糊
+                const stretch = this.speed * 1.5;
+                ctx.drawImage(asset.img, cx, cy - stretch/2, w, h + stretch);
+                ctx.restore();
+            } else {
+                ctx.drawImage(asset.img, cx, cy, w, h);
+            }
+        } else {
+            // Fallback
+            ctx.fillStyle = '#eee';
+            ctx.fillRect(cx, cy, w, h);
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 30px "Noto Sans TC"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(foodData[id] || id, x + SYMBOL_WIDTH/2, y + SYMBOL_HEIGHT/2);
+        }
+    }
+}
+
+function initGame() {
+    // 建立 3 個滾輪
+    reels = [new Reel(0), new Reel(1), new Reel(2)];
+    loop();
+}
+
+function loop() {
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    
+    // 檢查是否全部停止
+    let allLocked = true;
+    
+    reels.forEach(r => {
+        r.update();
+        r.draw(ctx);
+        if (!r.isLocked) allLocked = false;
+    });
+
+    if (isSpinning && allLocked) {
+        // 全部鎖定完成，結束遊戲
+        gameFinished();
+    }
+    
+    // 繪製粒子特效
+    updateParticles();
+
+    animationId = requestAnimationFrame(loop);
+}
+
+spinBtn.addEventListener('click', () => {
+    if (isSpinning) return;
+    initAudio(); // 初始化 Audio Context (必須在使用者互動後)
+    startSpin();
+});
+
+function startSpin() {
+    isSpinning = true;
+    spinBtn.disabled = true;
+    statusText.innerText = "SPINNING...";
+    roundCounter++;
+    roundCountEl.innerText = roundCounter;
+    
+    // 移除 setRandomHost()，這樣主持人就不會自動換了
+
+    reels.forEach(r => r.start());
+
+    // 決定結果
+    const result = determineResult();
+    
+    // 依序停止 (時間稍微縮短一點，讓節奏快一點)
+    setTimeout(() => reels[0].stop(result[0]), 2000);
+    setTimeout(() => reels[1].stop(result[1]), 2500);
+    setTimeout(() => reels[2].stop(result[2]), 3000);
+
+    // 【安全保險絲】
+    // 為了防止任何意外導致按鈕卡死，設定一個 8 秒的強制重置計時器
+    // 如果 8 秒後 isSpinning 還是 true，強制結束
+    if (failSafeTimeout) clearTimeout(failSafeTimeout);
+    failSafeTimeout = setTimeout(() => {
+        if (isSpinning) {
+            console.log("Force Reset triggered");
+            reels.forEach((r, idx) => {
+                r.speed = 0;
+                r.isLocked = true;
+                r.currentId = result[idx]; // 強制顯示結果
+                r.offsetY = 0;
+            });
+            gameFinished();
+        }
+    }, 8000);
+}
+
+let currentResult = []; // 暫存結果供結束時使用
+
+function gameFinished() {
+    isSpinning = false;
+    spinBtn.disabled = false;
+    statusText.innerText = "READY";
+    if (failSafeTimeout) clearTimeout(failSafeTimeout);
+    
+    // 檢查結果 (從滾輪實際狀態讀取最準確)
+    const finalIds = reels.map(r => r.currentId);
+    
+    if (finalIds[0] === finalIds[1] && finalIds[1] === finalIds[2]) {
+        triggerWin(finalIds[0]);
+    }
+}
+
+function determineResult() {
+    // 判斷是否達到隨機的目標局數
+    let isWin = false;
+    if (roundCounter >= targetWinRound) {
+        isWin = true;
+    }
+    
+    let res = [];
+    if (isWin) {
+        // 中獎！
+        const winId = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        res = [winId, winId, winId];
+
+        // 重置局數，並隨機產生下一次的目標 (1~6)
+        roundCounter = 0;
+        targetWinRound = Math.floor(Math.random() * 6) + 1;
+    } else {
+        // 沒中，產生三個不同的
+        let r1 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        let r2 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        let r3 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        while (r1 === r2 && r2 === r3) {
+            r3 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        }
+        res = [r1, r2, r3];
+    }
+    currentResult = res;
+    return res;
+}
+
+function triggerWin(foodId) {
+    playSound('win'); // 播放勝利音效
+    createParticles(CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
+    
+    setTimeout(() => {
+        const name = foodData[foodId];
+        resultFoodName.innerText = name;
+        
+        resultImageContainer.innerHTML = '';
+        if (assets[foodId].img) {
+            const imgClone = assets[foodId].img.cloneNode();
+            imgClone.className = 'h-full object-contain';
+            resultImageContainer.appendChild(imgClone);
+        } else {
+            resultImageContainer.innerText = name;
+        }
+
+        resultModal.style.pointerEvents = 'auto';
+        resultModal.style.opacity = '1';
+        resultModal.querySelector('div').style.transform = 'scale(1)';
+    }, 200);
+}
+
+function closeModal() {
+    resultModal.style.opacity = '0';
+    resultModal.style.pointerEvents = 'none';
+    resultModal.querySelector('div').style.transform = 'scale(0.9)';
+}
+
+// ---- 粒子系統 ----
+function createParticles(x, y) {
+    for (let i = 0; i < 150; i++) {
+        particles.push({
+            x: x + (Math.random()-0.5)*800, // 散佈在整個畫面
+            y: y + (Math.random()-0.5)*200,
+            vx: (Math.random() - 0.5) * 20,
+            vy: (Math.random() - 0.5) * 20,
+            life: 1.0,
+            color: `hsl(${Math.random() * 60 + 20}, 100%, 50%)` // 金黃色系
+        });
+    }
+}
+
+function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.5;
+        p.life -= 0.02;
+        
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.random()*6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+}
+
+window.onload = loadAssets;
+
+</script>
+</body>
+</html>
