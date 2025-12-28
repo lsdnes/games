@@ -82,7 +82,8 @@
         .host-frame {
             background: linear-gradient(45deg, #ffd700, #b8860b);
             padding: 5px;
-            border-radius: 100%;
+            /* 修改：移除圓形設定 (100%)，改為圓角矩形 (20px) */
+            border-radius: 20px;
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
         }
     </style>
@@ -102,7 +103,8 @@
         
         <!-- 左側：主持人 (桌面版) -->
         <div class="hidden lg:flex flex-col items-center w-1/4">
-            <div class="host-frame w-48 h-48 relative overflow-hidden bg-gray-800">
+            <!-- 修改：調整寬高比例以符合 1280x1097 (約 1.16:1)，改為 w-64 h-56 -->
+            <div class="host-frame w-64 h-56 relative overflow-hidden bg-gray-800">
                 <img id="host-img-desktop" src="" alt="主持人" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('host-fallback').style.display='flex'">
                 <div id="host-fallback" class="hidden absolute inset-0 flex items-center justify-center bg-gray-800 text-white flex-col">
                     <span class="text-4xl">🎤</span>
@@ -175,7 +177,8 @@
             
             <!-- 手機版主持人 (顯示在下方) -->
             <div class="lg:hidden mt-4 flex items-center gap-3 bg-gray-800 p-2 rounded-lg border border-gray-700 relative">
-                <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-yellow-500">
+                <!-- 修改：手機版頭像也改為圓角矩形，並調整寬高比例 -->
+                <div class="w-16 h-14 rounded-lg overflow-hidden border-2 border-yellow-500 flex-shrink-0">
                     <img id="host-img-mobile" src="" class="w-full h-full object-cover">
                 </div>
                 <div class="text-white flex-grow">
