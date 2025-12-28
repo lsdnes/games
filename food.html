@@ -24,17 +24,28 @@
                 0 0 50px rgba(0,0,0,0.8),
                 inset 0 0 20px rgba(0,0,0,0.5);
             border-radius: 20px;
-            padding: 20px;
+            /* 手機版減少 padding，電腦版維持 20px */
+            padding: 10px; 
             position: relative;
+        }
+        @media (min-width: 768px) {
+            .slot-machine-frame {
+                padding: 20px;
+            }
         }
 
         /* 螢幕邊框 */
         .screen-bezel {
             background: #000;
             border-radius: 10px;
-            padding: 15px;
+            padding: 10px; /* 手機版邊框變細 */
             box-shadow: inset 0 0 15px rgba(0,0,0,1);
             border: 4px solid #444;
+        }
+        @media (min-width: 768px) {
+            .screen-bezel {
+                padding: 15px;
+            }
         }
 
         /* 霓虹燈效果 */
@@ -69,41 +80,41 @@
             filter: grayscale(100%);
         }
 
-        /* 滾輪視窗遮罩 */
+        /* 滾輪視窗遮罩 - 關鍵修正：使用 aspect-ratio 替代固定高度 */
         .reel-window {
             position: relative;
             overflow: hidden;
             background: #fff;
-            /* 內陰影造成立體感 */
             box-shadow: inset 0 10px 20px rgba(0,0,0,0.8), inset 0 -10px 20px rgba(0,0,0,0.8);
+            width: 100%;
+            /* 保持 900:250 的比例，確保手機上不變形 */
+            aspect-ratio: 900 / 250; 
         }
 
         /* 主持人圖片外框 */
         .host-frame {
             background: linear-gradient(45deg, #ffd700, #b8860b);
             padding: 5px;
-            /* 修改：移除圓形設定 (100%)，改為圓角矩形 (20px) */
             border-radius: 20px;
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body class="min-h-screen flex flex-col items-center justify-center p-2 md:p-4">
 
     <!-- 標題區 -->
-    <div class="mb-8 text-center">
-        <h1 class="text-4xl md:text-6xl font-black title-glow tracking-wider mb-2">
+    <div class="mb-4 md:mb-8 text-center">
+        <!-- 手機版字體縮小至 3xl，避免爆版 -->
+        <h1 class="text-3xl md:text-6xl font-black title-glow tracking-wider mb-2">
             今天吃什麼？
         </h1>
-        <!-- 更新標題文字 -->
-        <p class="text-gray-400 text-sm md:text-base">專治餓人 • 美食拉霸機</p>
+        <p class="text-gray-400 text-xs md:text-base">專治選擇餓人 • 美食拉霸機</p>
     </div>
 
-    <div class="flex flex-col lg:flex-row items-center justify-center gap-8 w-full max-w-6xl">
+    <div class="flex flex-col lg:flex-row items-center justify-center gap-4 md:gap-8 w-full max-w-6xl">
         
         <!-- 左側：主持人 (桌面版) -->
         <div class="hidden lg:flex flex-col items-center w-1/4">
-            <!-- 修改：調整寬高比例以符合 1280x1097 (約 1.16:1)，改為 w-64 h-56 -->
             <div class="host-frame w-64 h-56 relative overflow-hidden bg-gray-800">
                 <img id="host-img-desktop" src="" alt="主持人" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('host-fallback').style.display='flex'">
                 <div id="host-fallback" class="hidden absolute inset-0 flex items-center justify-center bg-gray-800 text-white flex-col">
@@ -116,7 +127,6 @@
                 <p id="host-name-desktop" class="text-lg">美食顧問</p>
             </div>
             
-            <!-- 新增更換主持人按鈕 -->
             <button onclick="setRandomHost()" class="mt-3 text-gray-500 text-xs hover:text-yellow-400 flex items-center gap-1 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -128,15 +138,15 @@
         <!-- 中間：拉霸機台 -->
         <div class="slot-machine-frame w-full max-w-3xl">
             <!-- 機台頂部裝飾 -->
-            <div class="flex justify-between items-center mb-4 px-2">
-                <div class="flex gap-2">
-                    <div class="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_red]"></div>
-                    <div class="w-3 h-3 rounded-full bg-yellow-500 animate-pulse delay-75 shadow-[0_0_8px_yellow]"></div>
+            <div class="flex justify-between items-center mb-2 md:mb-4 px-2">
+                <div class="flex gap-1 md:gap-2">
+                    <div class="w-2 h-2 md:w-3 md:h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_red]"></div>
+                    <div class="w-2 h-2 md:w-3 md:h-3 rounded-full bg-yellow-500 animate-pulse delay-75 shadow-[0_0_8px_yellow]"></div>
                 </div>
-                <div class="text-gray-600 font-mono text-xs font-bold">SLOT-2024-FOOD</div>
-                <div class="flex gap-2">
-                    <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse delay-150 shadow-[0_0_8px_lime]"></div>
-                    <div class="w-3 h-3 rounded-full bg-blue-500 animate-pulse delay-200 shadow-[0_0_8px_blue]"></div>
+                <div class="text-gray-600 font-mono text-[10px] md:text-xs font-bold">SLOT-2024-FOOD</div>
+                <div class="flex gap-1 md:gap-2">
+                    <div class="w-2 h-2 md:w-3 md:h-3 rounded-full bg-green-500 animate-pulse delay-150 shadow-[0_0_8px_lime]"></div>
+                    <div class="w-2 h-2 md:w-3 md:h-3 rounded-full bg-blue-500 animate-pulse delay-200 shadow-[0_0_8px_blue]"></div>
                 </div>
             </div>
 
@@ -145,39 +155,39 @@
                 <!-- 中獎線 (紅色橫線) -->
                 <div class="absolute top-1/2 left-0 w-full h-1 bg-red-500/50 z-10 pointer-events-none transform -translate-y-1/2 shadow-[0_0_10px_red]"></div>
                 <!-- 左右箭頭指示 -->
-                <div class="absolute top-1/2 -left-3 transform -translate-y-1/2 text-red-500 text-2xl font-bold z-20">▶</div>
-                <div class="absolute top-1/2 -right-3 transform -translate-y-1/2 text-red-500 text-2xl font-bold z-20">◀</div>
+                <div class="absolute top-1/2 -left-3 transform -translate-y-1/2 text-red-500 text-xl md:text-2xl font-bold z-20">▶</div>
+                <div class="absolute top-1/2 -right-3 transform -translate-y-1/2 text-red-500 text-xl md:text-2xl font-bold z-20">◀</div>
 
                 <!-- Canvas -->
-                <div class="reel-window rounded border-2 border-gray-700 h-[250px]">
-                    <canvas id="slotCanvas" width="900" height="250" class="w-full h-full block object-contain"></canvas>
+                <!-- 這裡移除了 h-[250px]，改用 CSS 的 aspect-ratio 控制 -->
+                <div class="reel-window rounded border-2 border-gray-700">
+                    <canvas id="slotCanvas" width="900" height="250" class="w-full h-full block"></canvas>
                 </div>
             </div>
 
             <!-- 控制面板區 -->
-            <div class="mt-6 flex flex-col md:flex-row justify-between items-center gap-4 px-4">
+            <div class="mt-4 md:mt-6 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-4 px-2 md:px-4">
                 
                 <!-- 資訊顯示 -->
-                <div class="bg-black/80 rounded-lg p-3 border border-gray-600 w-full md:w-auto text-center min-w-[120px]">
-                    <div class="text-gray-400 text-xs uppercase tracking-widest">ROUND</div>
-                    <div id="roundCount" class="text-red-500 font-mono text-2xl font-bold glow-text">0</div>
+                <div class="bg-black/80 rounded-lg p-2 md:p-3 border border-gray-600 w-full md:w-auto text-center min-w-[100px] md:min-w-[120px]">
+                    <div class="text-gray-400 text-[10px] md:text-xs uppercase tracking-widest">ROUND</div>
+                    <div id="roundCount" class="text-red-500 font-mono text-xl md:text-2xl font-bold glow-text">0</div>
                 </div>
 
                 <!-- 啟動按鈕 -->
-                <button id="spinBtn" class="spin-btn rounded-full w-24 h-24 md:w-32 md:h-32 flex items-center justify-center relative group">
-                    <span class="text-red-900 font-black text-xl md:text-2xl group-hover:scale-110 transition-transform">SPIN</span>
+                <button id="spinBtn" class="spin-btn rounded-full w-20 h-20 md:w-32 md:h-32 flex items-center justify-center relative group shrink-0">
+                    <span class="text-red-900 font-black text-lg md:text-2xl group-hover:scale-110 transition-transform">SPIN</span>
                 </button>
 
                 <!-- 狀態顯示 -->
-                <div class="bg-black/80 rounded-lg p-3 border border-gray-600 w-full md:w-auto text-center min-w-[120px]">
-                    <div class="text-gray-400 text-xs uppercase tracking-widest">STATUS</div>
-                    <div id="statusText" class="text-yellow-400 font-mono text-sm font-bold">READY</div>
+                <div class="bg-black/80 rounded-lg p-2 md:p-3 border border-gray-600 w-full md:w-auto text-center min-w-[100px] md:min-w-[120px]">
+                    <div class="text-gray-400 text-[10px] md:text-xs uppercase tracking-widest">STATUS</div>
+                    <div id="statusText" class="text-yellow-400 font-mono text-xs md:text-sm font-bold">READY</div>
                 </div>
             </div>
             
             <!-- 手機版主持人 (顯示在下方) -->
-            <div class="lg:hidden mt-4 flex items-center gap-3 bg-gray-800 p-2 rounded-lg border border-gray-700 relative">
-                <!-- 修改：手機版頭像也改為圓角矩形，並調整寬高比例 -->
+            <div class="lg:hidden mt-3 md:mt-4 flex items-center gap-3 bg-gray-800 p-2 rounded-lg border border-gray-700 relative">
                 <div class="w-16 h-14 rounded-lg overflow-hidden border-2 border-yellow-500 flex-shrink-0">
                     <img id="host-img-mobile" src="" class="w-full h-full object-cover">
                 </div>
@@ -185,7 +195,6 @@
                     <div class="text-xs text-yellow-500">主持人</div>
                     <div class="font-bold">美食顧問</div>
                 </div>
-                <!-- 手機版更換按鈕 -->
                 <button onclick="setRandomHost()" class="p-2 text-gray-400 hover:text-white bg-gray-700 rounded-full" title="更換主持人">
                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -199,7 +208,7 @@
     <div id="resultModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm">
         <div class="bg-white rounded-2xl p-1 max-w-md w-[90%] transform scale-90 transition-transform duration-300">
             <div class="bg-gradient-to-b from-red-600 to-red-800 rounded-xl p-8 text-center border-4 border-yellow-400 shadow-[0_0_50px_rgba(255,0,0,0.5)]">
-                <h2 class="text-4xl font-black text-white mb-2 drop-shadow-lg">🎉 中獎啦！ 🎉</h2>
+                <h2 class="text-3xl md:text-4xl font-black text-white mb-2 drop-shadow-lg">🎉 中獎啦！ 🎉</h2>
                 <div class="text-yellow-200 text-lg mb-4">今天的美食是...</div>
                 
                 <div class="bg-white rounded-lg p-4 mb-6 shadow-inner transform rotate-1 hover:rotate-0 transition-transform duration-300">
