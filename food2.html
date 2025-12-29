@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天吃什麼？魔法廚房</title>
+    <!-- 使用 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 引入可愛圓潤的字體 */
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap');
+        
+        body {
+            /* 字體改成圓潤可愛風 */
+            font-family: 'Zen Maru Gothic', 'Fredoka', sans-serif;
+            background-color: #fff0f5;
+            touch-action: manipulation;
+            /* 夢幻雲朵背景 */
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 200, 221, 0.5) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(180, 220, 255, 0.5) 0%, transparent 20%),
+                linear-gradient(135deg, #fff0f5 0%, #e6e6fa 100%);
+            overflow-x: hidden;
+        }
+        
+        /* 機台外框：糖果屋風格 */
+        .slot-machine-frame {
+            background: #ffb7b2; /* 柔和粉紅 */
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.2) 0px, rgba(255,255,255,0.2) 20px, transparent 20px, transparent 40px);
+            box-shadow: 
+                0 15px 0 #ff9e99, /* 底部立體厚度 (像玩具) */
+                0 25px 20px rgba(0,0,0,0.1),
+                inset 0 5px 10px rgba(255,255,255,0.5);
+            border-radius: 40px;
+            border: 8px solid #fff;
+            padding: 15px; 
+            position: relative;
+        }
+        @media (min-width: 768px) {
+            .slot-machine-frame {
+                padding: 30px;
+                border-radius: 60px;
+                border-width: 12px;
+            }
+        }
+
+        /* 螢幕邊框：奶油餅乾風 */
+        .screen-bezel {
+            background: #fff;
+            border-radius: 25px;
+            padding: 10px;
+            box-shadow: inset 0 5px 15px rgba(255, 182, 193, 0.4);
+            border: 6px solid #bde0fe; /* 粉藍邊框 */
+        }
+        @media (min-width: 768px) {
+            .screen-bezel {
+                padding: 15px;
+                border-radius: 35px;
+                border-width: 8px;
+            }
+        }
+
+        /* 標題特效：貼紙風 */
+        .title-style {
+            color: #ff6b6b;
+            text-shadow: 
+                3px 3px 0px #fff, 
+                6px 6px 0px #ffd93d;
+            letter-spacing: 2px;
+        }
+        
+        /* 按鈕特效：果凍感 */
+        .spin-btn {
+            background: radial-gradient(circle at 30% 30%, #ff9a9e, #ff6b6b);
+            box-shadow: 
+                0 8px 0 #d64545,
+                0 15px 20px rgba(255, 107, 107, 0.3),
+                inset 0 5px 10px rgba(255,255,255,0.6);
+            transition: all 0.1s;
+            border: 4px solid #fff;
+        }
+        .spin-btn:active {
+            transform: translateY(6px);
+            box-shadow: 
+                0 2px 0 #d64545,
+                inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .spin-btn:disabled {
+            background: #e0e0e0;
+            box-shadow: 0 4px 0 #bebebe;
+            cursor: not-allowed;
+            border-color: #f0f0f0;
+            filter: grayscale(0.5);
+        }
+
+        /* 滾輪視窗遮罩 */
+        .reel-window {
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+            /* 內陰影改柔和 */
+            box-shadow: inset 0 10px 15px rgba(189, 224, 254, 0.5), inset 0 -10px 15px rgba(189, 224, 254, 0.5);
+            width: 100%;
+            border-radius: 15px;
+            aspect-ratio: 900 / 250; 
+        }
+
+        /* 主持人圖片外框：拍立得風格 */
+        .host-frame {
+            background: #fff;
+            padding: 8px 8px 25px 8px; /* 底部留白像拍立得 */
+            border-radius: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transform: rotate(-2deg);
+            transition: transform 0.3s ease;
+        }
+        .host-frame:hover {
+            transform: rotate(0deg) scale(1.02);
+        }
+
+        /* 狀態顯示框：像標籤貼紙 */
+        .status-box {
+            background: #fff;
+            border: 3px dashed #ffd93d;
+            border-radius: 15px;
+            color: #555;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.05);
+        }
+        
+        /* 裝飾性雲朵 */
+        .cloud {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0.6;
+            z-index: -1;
+            animation: floatCloud 20s infinite linear;
+        }
+        @keyframes floatCloud {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(100vw); }
+        }
+
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 md:p-4">
+
+    <!-- 裝飾背景雲朵 -->
+    <div class="cloud w-24 h-24 top-10 left-0"></div>
+    <div class="cloud w-32 h-32 bottom-20 right-0 animation-delay-500"></div>
+
+    <!-- 標題區 -->
+    <div class="mb-4 md:mb-8 text-center relative z-10">
+        <h1 class="text-3xl md:text-6xl font-black title-style mb-2">
+            今天吃什麼？
+        </h1>
+        <div class="inline-block bg-white px-4 py-1 rounded-full shadow-sm border-2 border-pink-200">
+            <p class="text-pink-400 text-xs md:text-base font-bold">✨ 魔法廚房 • 美味變身 ✨</p>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row items-center justify-center gap-6 md:gap-12 w-full max-w-6xl z-10">
+        
+        <!-- 左側：主持人 (桌面版) -->
+        <div class="hidden lg:flex flex-col items-center w-1/4">
+            <div class="host-frame w-64 h-auto relative bg-white">
+                <div class="w-full h-56 overflow-hidden bg-pink-50 relative">
+                    <img id="host-img-desktop" src="" alt="主持人" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('host-fallback').style.display='flex'">
+                    <div id="host-fallback" class="hidden absolute inset-0 flex items-center justify-center bg-pink-100 text-pink-300 flex-col">
+                        <span class="text-4xl">🧸</span>
+                        <span class="text-xs mt-2 font-bold">小精靈</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 relative">
+                <div class="absolute -top-3 -left-3 text-2xl animate-bounce">✨</div>
+                <div class="bg-white text-pink-500 px-6 py-2 rounded-full font-bold border-2 border-pink-200 shadow-md text-center">
+                    <p class="text-xs text-gray-400 mb-1">本局小精靈</p>
+                    <p id="host-name-desktop" class="text-lg">美食顧問</p>
+                </div>
+                <div class="absolute -bottom-2 -right-2 text-2xl animate-pulse">🍭</div>
+            </div>
+            
+            <button onclick="setRandomHost()" class="mt-3 text-pink-400 text-sm hover:text-pink-600 flex items-center gap-1 transition-colors font-bold bg-white/50 px-3 py-1 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                換一個
+            </button>
+        </div>
+
+        <!-- 中間：拉霸機台 -->
+        <div class="slot-machine-frame w-full max-w-3xl">
+            <!-- 機台頂部裝飾 -->
+            <div class="flex justify-between items-center mb-2 md:mb-4 px-2">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 md:w-4 md:h-4 rounded-full bg-pink-400 border-2 border-white shadow-sm"></div>
+                    <div class="w-3 h-3 md:w-4 md:h-4 rounded-full bg-yellow-400 border-2 border-white shadow-sm"></div>
+                </div>
+                <div class="text-white font-bold text-xs md:text-sm bg-pink-400 px-3 py-1 rounded-full shadow-inner">MAGIC-KITCHEN</div>
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 md:w-4 md:h-4 rounded-full bg-blue-400 border-2 border-white shadow-sm"></div>
+                    <div class="w-3 h-3 md:w-4 md:h-4 rounded-full bg-purple-400 border-2 border-white shadow-sm"></div>
+                </div>
+            </div>
+
+            <!-- 螢幕區 -->
+            <div class="screen-bezel bg-white relative">
+                <!-- 中獎線 (粉色虛線) -->
+                <div class="absolute top-1/2 left-0 w-full h-1 bg-pink-400/30 z-10 pointer-events-none transform -translate-y-1/2 border-t-2 border-dashed border-pink-400"></div>
+                <!-- 左右箭頭指示 -->
+                <div class="absolute top-1/2 -left-2 md:-left-4 transform -translate-y-1/2 text-pink-400 text-2xl md:text-3xl font-black z-20">♥</div>
+                <div class="absolute top-1/2 -right-2 md:-right-4 transform -translate-y-1/2 text-pink-400 text-2xl md:text-3xl font-black z-20">♥</div>
+
+                <!-- Canvas -->
+                <div class="reel-window border-4 border-pink-100">
+                    <canvas id="slotCanvas" width="900" height="250" class="w-full h-full block"></canvas>
+                </div>
+            </div>
+
+            <!-- 控制面板區 -->
+            <div class="mt-6 md:mt-8 flex flex-col md:flex-row justify-between items-center gap-4 px-2 md:px-6">
+                
+                <!-- 資訊顯示 -->
+                <div class="status-box p-2 md:p-3 w-full md:w-auto text-center min-w-[120px]">
+                    <div class="text-pink-300 text-xs font-bold mb-1">回合</div>
+                    <div id="roundCount" class="text-gray-600 font-bold text-2xl">0</div>
+                </div>
+
+                <!-- 啟動按鈕 -->
+                <button id="spinBtn" class="spin-btn rounded-full w-24 h-24 md:w-32 md:h-32 flex items-center justify-center relative group shrink-0">
+                    <div class="text-center">
+                        <span class="block text-white font-black text-xl md:text-3xl drop-shadow-md group-hover:scale-110 transition-transform">GO!</span>
+                        <span class="block text-white/80 text-xs font-bold">開始</span>
+                    </div>
+                </button>
+
+                <!-- 狀態顯示 -->
+                <div class="status-box p-2 md:p-3 w-full md:w-auto text-center min-w-[120px]">
+                    <div class="text-pink-300 text-xs font-bold mb-1">狀態</div>
+                    <div id="statusText" class="text-blue-400 font-bold text-sm">準備好了</div>
+                </div>
+            </div>
+            
+            <!-- 手機版主持人 -->
+            <div class="lg:hidden mt-4 flex items-center gap-3 bg-white p-3 rounded-2xl border-2 border-pink-100 shadow-sm relative">
+                <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-pink-300 flex-shrink-0 bg-pink-50">
+                    <img id="host-img-mobile" src="" class="w-full h-full object-cover">
+                </div>
+                <div class="text-gray-600 flex-grow">
+                    <div class="text-xs text-pink-400 font-bold">小精靈</div>
+                    <div class="font-bold">美食顧問</div>
+                </div>
+                <button onclick="setRandomHost()" class="p-2 text-pink-300 hover:text-pink-500 bg-pink-50 rounded-full" title="更換主持人">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果彈窗 -->
+    <div id="resultModal" class="fixed inset-0 bg-pink-900/40 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-2 max-w-md w-[90%] transform scale-90 transition-transform duration-300 shadow-2xl">
+            <div class="bg-gradient-to-b from-yellow-50 to-white rounded-2xl p-6 text-center border-4 border-pink-200 border-dashed">
+                <h2 class="text-3xl md:text-4xl font-black text-pink-500 mb-2 drop-shadow-sm">🎉 哇！決定了 🎉</h2>
+                <div class="text-gray-400 text-sm mb-4 font-bold">魔法廚房為你準備的是...</div>
+                
+                <div class="bg-pink-50 rounded-2xl p-4 mb-6 shadow-inner transform -rotate-1 hover:rotate-0 transition-transform duration-300 border border-pink-100">
+                    <div id="resultImageContainer" class="w-full h-48 flex items-center justify-center overflow-hidden rounded-xl mb-3 bg-white">
+                        <!-- JS 插入圖片 -->
+                    </div>
+                    <div id="resultFoodName" class="text-3xl font-black text-gray-700 tracking-wider"></div>
+                </div>
+                
+                <button onclick="closeModal()" class="w-full py-3 bg-pink-400 hover:bg-pink-300 text-white rounded-xl font-bold text-xl shadow-[0_4px_0_#d64545] active:shadow-none active:translate-y-[4px] transition-all">
+                    再玩一次
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+/**
+ * 食物與資料設定
+ */
+const foodData = {
+    "food1": "水餃", "food2": "蚵仔麵線", "food3": "魯肉飯", "food4": "義大利麵", "food5": "披薩",
+    "food6": "豬腳飯", "food7": "牛肉麵", "food8": "肉圓", "food9": "乾麵", "food10": "貢丸湯",
+    "food11": "漢堡", "food12": "壽司", "food13": "炸雞", "food14": "涼麵", "food15": "排骨飯",
+    "food16": "沙拉", "food17": "鹹酥雞", "food18": "鯖魚飯", "food19": "燙青菜", "food20": "吃火鍋",
+    "food21": "吃拉麵"
+};
+
+const canvas = document.getElementById('slotCanvas');
+const ctx = canvas.getContext('2d');
+const spinBtn = document.getElementById('spinBtn');
+const roundCountEl = document.getElementById('roundCount');
+const statusText = document.getElementById('statusText');
+const resultModal = document.getElementById('resultModal');
+const resultFoodName = document.getElementById('resultFoodName');
+const resultImageContainer = document.getElementById('resultImageContainer');
+
+// 遊戲參數
+const TOTAL_FOODS = 21;
+let targetWinRound = Math.floor(Math.random() * 6) + 1;
+
+// 版面設定
+const CANVAS_WIDTH = 900;
+const CANVAS_HEIGHT = 250;
+const REEL_COUNT = 3;
+const SYMBOL_WIDTH = CANVAS_WIDTH / REEL_COUNT; 
+const SYMBOL_HEIGHT = CANVAS_HEIGHT; 
+
+let assets = {};
+let hostImages = []; 
+let reels = [];
+let isSpinning = false;
+let roundCounter = 0;
+let animationId;
+let particles = [];
+let failSafeTimeout = null;
+
+// 音效 Context
+let audioCtx = null;
+
+/**
+ * 娃娃風音效合成器 (Cute/Toy/Fairy Sound Design)
+ */
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function playSound(type) {
+    if (!audioCtx) return;
+    
+    const now = audioCtx.currentTime;
+
+    if (type === 'spin') {
+        // "啵啵啵" 泡泡聲 (Sine wave with rapid pitch slide up)
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        osc.type = 'sine';
+        // 頻率從 400Hz 快速滑到 600Hz，製造「啵」的感覺
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+        
+        // 音量快速衰減
+        gainNode.gain.setValueAtTime(0.3, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        
+        osc.start(now);
+        osc.stop(now + 0.1);
+    } 
+    else if (type === 'stop') {
+        // "叮！" 清脆的玩具敲擊聲 (High pitched Sine/Triangle)
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        osc.type = 'sine'; // Sine 比較圓潤
+        osc.frequency.setValueAtTime(1200, now); // 高音
+        
+        // 短促但有餘音
+        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        
+        osc.start(now);
+        osc.stop(now + 0.5);
+    } 
+    else if (type === 'win') {
+        // 魔法棒/音樂盒音效 (Celesta-like arpeggio)
+        // 使用多個正弦波疊加，頻率為大調音階 (C Major: C5, E5, G5, C6)
+        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]; 
+        let time = now;
+        
+        notes.forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, time);
+            
+            // 鐘聲 Envelope (快速 Attack, 慢 Decay)
+            gainNode.gain.setValueAtTime(0, time);
+            gainNode.gain.linearRampToValueAtTime(0.2, time + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, time + 1.5); // 延長餘音
+            
+            // 讓聲音稍微重疊
+            osc.start(time);
+            osc.stop(time + 1.5);
+            
+            time += 0.1; // 快速琶音
+        });
+    }
+}
+
+/**
+ * 資源載入
+ */
+async function loadAssets() {
+    const promises = [];
+    
+    // 載入食物圖片
+    for (let i = 1; i <= TOTAL_FOODS; i++) {
+        const id = `food${i}`;
+        const p = new Promise((resolve) => {
+            const img = new Image();
+            img.src = `jpg/${id}.jpg`;
+            img.onload = () => resolve({ id, img, status: 'ok' });
+            img.onerror = () => resolve({ id, img: null, status: 'error' });
+        }).then(data => {
+            assets[data.id] = data;
+        });
+        promises.push(p);
+    }
+    
+    // 載入主持人圖片
+    for (let i = 1; i <= 11; i++) {
+         const fname = `jpg/P${i}.jpg`;
+         const p = new Promise((resolve) => {
+            const img = new Image();
+            img.src = fname;
+            img.onload = () => resolve(fname);
+            img.onerror = () => resolve(null);
+        }).then(validName => {
+            if(validName) hostImages.push(validName);
+        });
+        promises.push(p);
+    }
+
+    await Promise.all(promises);
+    setRandomHost();
+    initGame();
+}
+
+function setRandomHost() {
+    let filename = 'jpg/P1.jpg';
+    if (hostImages.length > 0) {
+        filename = hostImages[Math.floor(Math.random() * hostImages.length)];
+    }
+    const dImg = document.getElementById('host-img-desktop');
+    const mImg = document.getElementById('host-img-mobile');
+    dImg.style.display = 'block';
+    document.getElementById('host-fallback').style.display = 'none';
+    mImg.style.display = 'block';
+    dImg.src = filename;
+    mImg.src = filename;
+}
+
+/**
+ * 滾輪邏輯
+ */
+class Reel {
+    constructor(index) {
+        this.index = index;
+        this.x = index * SYMBOL_WIDTH;
+        this.offsetY = 0; 
+        this.speed = 0;
+        this.isStopping = false;
+        this.currentId = this.getRandomFoodId();
+        this.nextId = this.getRandomFoodId();
+        this.targetId = null;
+        this.isLocked = false;
+    }
+
+    getRandomFoodId() {
+        return `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+    }
+
+    start() {
+        this.speed = 40; 
+        this.isStopping = false;
+        this.isLocked = false;
+        this.targetId = null;
+    }
+
+    stop(target) {
+        this.isStopping = true;
+        this.targetId = target;
+    }
+
+    update() {
+        if (this.isLocked) return;
+
+        if (this.speed > 0) {
+            this.offsetY += this.speed;
+            
+            if (this.offsetY >= SYMBOL_HEIGHT) {
+                this.offsetY = 0; 
+                this.currentId = this.nextId;
+                
+                if (this.isStopping) {
+                    if (this.currentId === this.targetId) {
+                        this.speed = 0;
+                        this.isLocked = true;
+                        playSound('stop');
+                        return;
+                    } 
+                    else {
+                        this.nextId = this.targetId;
+                    }
+                } else {
+                    this.nextId = this.getRandomFoodId();
+                }
+                
+                if (isSpinning) playSound('spin');
+            }
+        }
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
+        ctx.clip();
+
+        // 繪製背景：淡粉色/白色交替
+        ctx.fillStyle = this.index % 2 === 0 ? '#fff' : '#fff5f7';
+        ctx.fillRect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
+
+        const yCurrent = this.offsetY; 
+        const yNext = this.offsetY - SYMBOL_HEIGHT;
+        
+        this.drawSymbol(ctx, this.currentId, this.x, yCurrent);
+        this.drawSymbol(ctx, this.nextId, this.x, yNext);
+
+        // 內部陰影變淡
+        const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+        grad.addColorStop(0, 'rgba(255, 192, 203, 0.4)'); // 頂部粉紅陰影
+        grad.addColorStop(0.1, 'rgba(0,0,0,0)');
+        grad.addColorStop(0.9, 'rgba(0,0,0,0)');
+        grad.addColorStop(1, 'rgba(255, 192, 203, 0.4)'); // 底部粉紅陰影
+        ctx.fillStyle = grad;
+        ctx.fillRect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
+        
+        // 分隔線改為虛線效果
+        if (this.index < REEL_COUNT - 1) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#ffccd5';
+            ctx.setLineDash([10, 10]);
+            ctx.moveTo(this.x + SYMBOL_WIDTH, 0);
+            ctx.lineTo(this.x + SYMBOL_WIDTH, CANVAS_HEIGHT);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        ctx.restore();
+    }
+
+    drawSymbol(ctx, id, x, y) {
+        const asset = assets[id];
+        const padding = 20;
+        const w = SYMBOL_WIDTH - padding * 2;
+        const h = SYMBOL_HEIGHT - padding * 2;
+        const cx = x + padding;
+        const cy = y + padding;
+
+        if (asset && asset.img) {
+            if (this.speed > 0 && !this.isLocked) { 
+                ctx.save();
+                ctx.filter = `blur(0px)`; 
+                const stretch = this.speed * 1.5;
+                // 運動模糊時稍微變透明一點，感覺更輕盈
+                ctx.globalAlpha = 0.8;
+                ctx.drawImage(asset.img, cx, cy - stretch/2, w, h + stretch);
+                ctx.restore();
+            } else {
+                // 靜止時加一點投影
+                ctx.save();
+                ctx.shadowColor = "rgba(0,0,0,0.1)";
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetY = 5;
+                ctx.drawImage(asset.img, cx, cy, w, h);
+                ctx.restore();
+            }
+        } else {
+            ctx.fillStyle = '#ffecf0';
+            ctx.beginPath();
+            ctx.roundRect(cx, cy, w, h, 20);
+            ctx.fill();
+            ctx.fillStyle = '#ff8fa3';
+            ctx.font = 'bold 30px "Zen Maru Gothic"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(foodData[id] || id, x + SYMBOL_WIDTH/2, y + SYMBOL_HEIGHT/2);
+        }
+    }
+}
+
+function initGame() {
+    reels = [new Reel(0), new Reel(1), new Reel(2)];
+    loop();
+}
+
+function loop() {
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    
+    let allLocked = true;
+    
+    reels.forEach(r => {
+        r.update();
+        r.draw(ctx);
+        if (!r.isLocked) allLocked = false;
+    });
+
+    if (isSpinning && allLocked) {
+        gameFinished();
+    }
+    
+    updateParticles();
+    animationId = requestAnimationFrame(loop);
+}
+
+spinBtn.addEventListener('click', () => {
+    if (isSpinning) return;
+    initAudio(); 
+    startSpin();
+});
+
+function startSpin() {
+    isSpinning = true;
+    spinBtn.disabled = true;
+    statusText.innerText = "變身中...";
+    roundCounter++;
+    roundCountEl.innerText = roundCounter;
+
+    reels.forEach(r => r.start());
+
+    const result = determineResult();
+    
+    setTimeout(() => reels[0].stop(result[0]), 2000);
+    setTimeout(() => reels[1].stop(result[1]), 2500);
+    setTimeout(() => reels[2].stop(result[2]), 3000);
+
+    if (failSafeTimeout) clearTimeout(failSafeTimeout);
+    failSafeTimeout = setTimeout(() => {
+        if (isSpinning) {
+            reels.forEach((r, idx) => {
+                r.speed = 0;
+                r.isLocked = true;
+                r.currentId = result[idx]; 
+                r.offsetY = 0;
+            });
+            gameFinished();
+        }
+    }, 8000);
+}
+
+function gameFinished() {
+    isSpinning = false;
+    spinBtn.disabled = false;
+    statusText.innerText = "準備好了";
+    if (failSafeTimeout) clearTimeout(failSafeTimeout);
+    
+    const finalIds = reels.map(r => r.currentId);
+    
+    if (finalIds[0] === finalIds[1] && finalIds[1] === finalIds[2]) {
+        triggerWin(finalIds[0]);
+    }
+}
+
+function determineResult() {
+    let isWin = false;
+    if (roundCounter >= targetWinRound) {
+        isWin = true;
+    }
+    
+    let res = [];
+    if (isWin) {
+        const winId = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        res = [winId, winId, winId];
+        roundCounter = 0;
+        targetWinRound = Math.floor(Math.random() * 6) + 1;
+    } else {
+        let r1 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        let r2 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        let r3 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        while (r1 === r2 && r2 === r3) {
+            r3 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        }
+        res = [r1, r2, r3];
+    }
+    return res;
+}
+
+function triggerWin(foodId) {
+    playSound('win'); 
+    createParticles(CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
+    
+    setTimeout(() => {
+        const name = foodData[foodId];
+        resultFoodName.innerText = name;
+        
+        resultImageContainer.innerHTML = '';
+        if (assets[foodId].img) {
+            const imgClone = assets[foodId].img.cloneNode();
+            imgClone.className = 'h-full object-contain';
+            resultImageContainer.appendChild(imgClone);
+        } else {
+            resultImageContainer.innerText = name;
+        }
+
+        resultModal.style.pointerEvents = 'auto';
+        resultModal.style.opacity = '1';
+        resultModal.querySelector('div').style.transform = 'scale(1)';
+    }, 500); // 稍微延遲一點讓星星飛一下
+}
+
+function closeModal() {
+    resultModal.style.opacity = '0';
+    resultModal.style.pointerEvents = 'none';
+    resultModal.querySelector('div').style.transform = 'scale(0.9)';
+}
+
+// ---- 夢幻粒子系統 (改為彩色圓點) ----
+function createParticles(x, y) {
+    // 增加粒子數量
+    for (let i = 0; i < 200; i++) {
+        particles.push({
+            x: x + (Math.random()-0.5)*800, 
+            y: y + (Math.random()-0.5)*200,
+            vx: (Math.random() - 0.5) * 15,
+            vy: (Math.random() - 0.5) * 15,
+            life: 1.0,
+            // 糖果色系
+            color: `hsl(${Math.random() * 360}, 90%, 75%)`,
+            size: Math.random() * 8 + 2
+        });
+    }
+}
+
+function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.2; // 重力輕一點
+        p.life -= 0.015; // 消失慢一點
+        
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        // 圓形粒子
+        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+}
+
+window.onload = loadAssets;
+
+</script>
+</body>
+</html>
