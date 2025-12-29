@@ -144,6 +144,31 @@
             0% { transform: translateX(-100px); }
             100% { transform: translateX(100vw); }
         }
+        
+        /* Modal 狀態控制：用 CSS class 來管理顯示/隱藏，避免 JS 邏輯打架 */
+        #resultModal {
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden; /* 確保隱藏時不會擋到按鈕 */
+            z-index: -1; /* 確保隱藏時層級最低 */
+        }
+        
+        #resultModal.show {
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+            z-index: 50; /* 顯示時拉高層級 */
+        }
+        
+        #resultModal.show .modal-content {
+            transform: scale(1);
+        }
+        
+        #resultModal .modal-content {
+            transform: scale(0.9);
+            transition: transform 0.3s ease-out;
+        }
 
     </style>
 </head>
@@ -266,9 +291,9 @@
     </div>
 
     <!-- 結果彈窗 -->
-    <div id="resultModal" class="fixed inset-0 bg-pink-900/40 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm p-4">
+    <div id="resultModal" class="fixed inset-0 bg-pink-900/40 flex items-center justify-center backdrop-blur-sm p-4">
         <!-- 修改重點：增加 max-h-[90vh] 和 overflow-y-auto 讓手機版內容過長時可以捲動，避免跑版 -->
-        <div class="bg-white rounded-3xl p-1.5 md:p-2 max-w-md w-full max-h-[90vh] overflow-y-auto transform scale-90 transition-transform duration-300 shadow-2xl relative">
+        <div class="modal-content bg-white rounded-3xl p-1.5 md:p-2 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
             <div class="bg-gradient-to-b from-yellow-50 to-white rounded-2xl p-5 md:p-6 text-center border-4 border-pink-200 border-dashed">
                 <h2 class="text-3xl md:text-4xl font-black text-pink-500 mb-2 drop-shadow-sm">🎉 哇！決定了 🎉</h2>
                 <div class="text-gray-400 text-sm mb-4 font-bold">魔法廚房為你準備的是...</div>
@@ -617,21 +642,26 @@ function initGame() {
 }
 
 function loop() {
-    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    
-    let allLocked = true;
-    
-    reels.forEach(r => {
-        r.update();
-        r.draw(ctx);
-        if (!r.isLocked) allLocked = false;
-    });
+    // 增加全域錯誤捕捉，防止遊戲崩潰卡死
+    try {
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        
+        let allLocked = true;
+        
+        reels.forEach(r => {
+            r.update();
+            r.draw(ctx);
+            if (!r.isLocked) allLocked = false;
+        });
 
-    if (isSpinning && allLocked) {
-        gameFinished();
+        if (isSpinning && allLocked) {
+            gameFinished();
+        }
+        
+        updateParticles();
+    } catch(e) {
+        console.error("Game loop error", e);
     }
-    
-    updateParticles();
     animationId = requestAnimationFrame(loop);
 }
 
@@ -744,9 +774,8 @@ function triggerWin(foodId) {
         // 鎖定背景捲動，防止版面跑掉
         document.body.style.overflow = 'hidden';
 
-        resultModal.style.pointerEvents = 'auto';
-        resultModal.style.opacity = '1';
-        resultModal.querySelector('div').style.transform = 'scale(1)';
+        // 使用 class 切換來顯示 Modal，確保 pointer-events 和 z-index 正確
+        resultModal.classList.add('show');
     }, 500); 
 }
 
@@ -754,9 +783,8 @@ function closeModal() {
     // 解除背景捲動鎖定
     document.body.style.overflow = '';
     
-    resultModal.style.opacity = '0';
-    resultModal.style.pointerEvents = 'none';
-    resultModal.querySelector('div').style.transform = 'scale(0.9)';
+    // 使用 class 切換來隱藏 Modal
+    resultModal.classList.remove('show');
     
     // 【重要修復】雙重保險：強制重置所有狀態，確保下一局可以進行
     spinBtn.disabled = false;
