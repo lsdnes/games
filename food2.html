@@ -145,20 +145,20 @@
             100% { transform: translateX(100vw); }
         }
         
-        /* Modal 狀態控制：用 CSS class 來管理顯示/隱藏，避免 JS 邏輯打架 */
+        /* Modal 狀態控制 */
         #resultModal {
             transition: opacity 0.3s ease-out, transform 0.3s ease-out;
             opacity: 0;
             pointer-events: none;
-            visibility: hidden; /* 確保隱藏時不會擋到按鈕 */
-            z-index: -1; /* 確保隱藏時層級最低 */
+            visibility: hidden; 
+            z-index: -1; 
         }
         
         #resultModal.show {
             opacity: 1;
             pointer-events: auto;
             visibility: visible;
-            z-index: 50; /* 顯示時拉高層級 */
+            z-index: 50; 
         }
         
         #resultModal.show .modal-content {
@@ -292,14 +292,12 @@
 
     <!-- 結果彈窗 -->
     <div id="resultModal" class="fixed inset-0 bg-pink-900/40 flex items-center justify-center backdrop-blur-sm p-4">
-        <!-- 修改重點：增加 max-h-[90vh] 和 overflow-y-auto 讓手機版內容過長時可以捲動，避免跑版 -->
         <div class="modal-content bg-white rounded-3xl p-1.5 md:p-2 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
             <div class="bg-gradient-to-b from-yellow-50 to-white rounded-2xl p-5 md:p-6 text-center border-4 border-pink-200 border-dashed">
                 <h2 class="text-3xl md:text-4xl font-black text-pink-500 mb-2 drop-shadow-sm">🎉 哇！決定了 🎉</h2>
                 <div class="text-gray-400 text-sm mb-4 font-bold">魔法廚房為你準備的是...</div>
                 
                 <div class="bg-pink-50 rounded-2xl p-3 md:p-4 mb-4 md:mb-6 shadow-inner transform -rotate-1 hover:rotate-0 transition-transform duration-300 border border-pink-100">
-                    <!-- 修改重點：手機版圖片高度改為 h-40，避免佔用太多垂直空間 -->
                     <div id="resultImageContainer" class="w-full h-40 md:h-48 flex items-center justify-center overflow-hidden rounded-xl mb-3 bg-white">
                         <!-- JS 插入圖片 -->
                     </div>
@@ -336,7 +334,6 @@ const resultImageContainer = document.getElementById('resultImageContainer');
 
 // 遊戲參數
 const TOTAL_FOODS = 21;
-// 修改重點：將 1-6 次 改為 1-4 次
 let targetWinRound = Math.floor(Math.random() * 4) + 1;
 
 // 版面設定
@@ -351,15 +348,15 @@ let hostImages = [];
 let reels = [];
 let isSpinning = false;
 let roundCounter = 0;
-let animationId;
+let animationId = null;
+let lastFrameTime = Date.now(); // 【新增】追蹤最後畫面更新時間
 let particles = [];
 let failSafeTimeout = null;
 
-// 音效 Context
 let audioCtx = null;
 
 /**
- * 娃娃風音效合成器 (Cute/Toy/Fairy Sound Design)
+ * 娃娃風音效合成器
  */
 function initAudio() {
     if (!audioCtx) {
@@ -372,67 +369,46 @@ function initAudio() {
 
 function playSound(type) {
     if (!audioCtx) return;
-    
     try {
         const now = audioCtx.currentTime;
-
         if (type === 'spin') {
-            // "啵啵啵" 泡泡聲
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
-            
             osc.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-            
             osc.type = 'sine';
             osc.frequency.setValueAtTime(400, now);
             osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
-            
             gainNode.gain.setValueAtTime(0.3, now);
             gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            
             osc.start(now);
             osc.stop(now + 0.1);
-        } 
-        else if (type === 'stop') {
-            // "叮！" 清脆的玩具敲擊聲
+        } else if (type === 'stop') {
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
-            
             osc.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-            
             osc.type = 'sine'; 
             osc.frequency.setValueAtTime(1200, now); 
-            
             gainNode.gain.setValueAtTime(0.2, now);
             gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-            
             osc.start(now);
             osc.stop(now + 0.5);
-        } 
-        else if (type === 'win') {
-            // 魔法棒/音樂盒音效
+        } else if (type === 'win') {
             const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]; 
             let time = now;
-            
             notes.forEach((freq, i) => {
                 const osc = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
-                
                 osc.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
-                
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(freq, time);
-                
                 gainNode.gain.setValueAtTime(0, time);
                 gainNode.gain.linearRampToValueAtTime(0.2, time + 0.05);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, time + 1.5); 
-                
                 osc.start(time);
                 osc.stop(time + 1.5);
-                
                 time += 0.1;
             });
         }
@@ -446,8 +422,6 @@ function playSound(type) {
  */
 async function loadAssets() {
     const promises = [];
-    
-    // 載入食物圖片
     for (let i = 1; i <= TOTAL_FOODS; i++) {
         const id = `food${i}`;
         const p = new Promise((resolve) => {
@@ -460,8 +434,6 @@ async function loadAssets() {
         });
         promises.push(p);
     }
-    
-    // 載入主持人圖片
     for (let i = 1; i <= 11; i++) {
          const fname = `jpg/P${i}.jpg`;
          const p = new Promise((resolve) => {
@@ -474,7 +446,6 @@ async function loadAssets() {
         });
         promises.push(p);
     }
-
     await Promise.all(promises);
     setRandomHost();
     initGame();
@@ -509,80 +480,61 @@ class Reel {
         this.targetId = null;
         this.isLocked = false;
     }
-
     getRandomFoodId() {
         return `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
     }
-
     start() {
         this.speed = 40; 
         this.isStopping = false;
         this.isLocked = false;
         this.targetId = null;
-        // 重置位置，確保長時間運作不會偏移
         this.offsetY = 0; 
     }
-
     stop(target) {
         this.isStopping = true;
         this.targetId = target;
     }
-
     update() {
         if (this.isLocked) return;
-
         if (this.speed > 0) {
             this.offsetY += this.speed;
-            
             if (this.offsetY >= SYMBOL_HEIGHT) {
                 this.offsetY = 0; 
                 this.currentId = this.nextId;
-                
                 if (this.isStopping) {
                     if (this.currentId === this.targetId) {
                         this.speed = 0;
                         this.isLocked = true;
                         playSound('stop');
                         return;
-                    } 
-                    else {
+                    } else {
                         this.nextId = this.targetId;
                     }
                 } else {
                     this.nextId = this.getRandomFoodId();
                 }
-                
                 if (isSpinning) playSound('spin');
             }
         }
     }
-
     draw(ctx) {
         ctx.save();
         ctx.beginPath();
         ctx.rect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
         ctx.clip();
-
-        // 繪製背景：淡粉色/白色交替
         ctx.fillStyle = this.index % 2 === 0 ? '#fff' : '#fff5f7';
         ctx.fillRect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
-
         const yCurrent = this.offsetY; 
         const yNext = this.offsetY - SYMBOL_HEIGHT;
-        
         this.drawSymbol(ctx, this.currentId, this.x, yCurrent);
         this.drawSymbol(ctx, this.nextId, this.x, yNext);
-
-        // 內部陰影變淡
         const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-        grad.addColorStop(0, 'rgba(255, 192, 203, 0.4)'); // 頂部粉紅陰影
+        grad.addColorStop(0, 'rgba(255, 192, 203, 0.4)');
         grad.addColorStop(0.1, 'rgba(0,0,0,0)');
         grad.addColorStop(0.9, 'rgba(0,0,0,0)');
-        grad.addColorStop(1, 'rgba(255, 192, 203, 0.4)'); // 底部粉紅陰影
+        grad.addColorStop(1, 'rgba(255, 192, 203, 0.4)');
         ctx.fillStyle = grad;
         ctx.fillRect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
-        
-        // 分隔線改為虛線效果
         if (this.index < REEL_COUNT - 1) {
             ctx.beginPath();
             ctx.strokeStyle = '#ffccd5';
@@ -592,10 +544,8 @@ class Reel {
             ctx.stroke();
             ctx.setLineDash([]);
         }
-
         ctx.restore();
     }
-
     drawSymbol(ctx, id, x, y) {
         const asset = assets[id];
         const padding = 20;
@@ -603,18 +553,15 @@ class Reel {
         const h = SYMBOL_HEIGHT - padding * 2;
         const cx = x + padding;
         const cy = y + padding;
-
         if (asset && asset.img) {
             if (this.speed > 0 && !this.isLocked) { 
                 ctx.save();
                 ctx.filter = `blur(0px)`; 
                 const stretch = this.speed * 1.5;
-                // 運動模糊時稍微變透明一點，感覺更輕盈
                 ctx.globalAlpha = 0.8;
                 ctx.drawImage(asset.img, cx, cy - stretch/2, w, h + stretch);
                 ctx.restore();
             } else {
-                // 靜止時加一點投影
                 ctx.save();
                 ctx.shadowColor = "rgba(0,0,0,0.1)";
                 ctx.shadowBlur = 10;
@@ -636,32 +583,41 @@ class Reel {
     }
 }
 
-function initGame() {
-    reels = [new Reel(0), new Reel(1), new Reel(2)];
+/**
+ * 【引擎核心】確保遊戲迴圈穩定執行
+ */
+function ensureGameLoop() {
+    // 防止重複執行，先取消舊的
+    if (animationId) cancelAnimationFrame(animationId);
     loop();
 }
 
+function initGame() {
+    reels = [new Reel(0), new Reel(1), new Reel(2)];
+    ensureGameLoop(); // 啟動遊戲引擎
+}
+
 function loop() {
-    // 增加全域錯誤捕捉，防止遊戲崩潰卡死
+    // 更新心跳時間
+    lastFrameTime = Date.now();
+
     try {
         ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        
         let allLocked = true;
-        
         reels.forEach(r => {
             r.update();
             r.draw(ctx);
             if (!r.isLocked) allLocked = false;
         });
-
         if (isSpinning && allLocked) {
             gameFinished();
         }
-        
         updateParticles();
     } catch(e) {
         console.error("Game loop error", e);
     }
+    
+    // 繼續下一幀
     animationId = requestAnimationFrame(loop);
 }
 
@@ -673,6 +629,13 @@ spinBtn.addEventListener('click', () => {
 
 function startSpin() {
     try {
+        // 【關鍵修復】檢查引擎是否因為背景執行而死掉 (超過200ms沒更新)
+        // 如果死掉，立刻重啟
+        if (Date.now() - lastFrameTime > 200) {
+            console.log("Detect loop freeze, restarting engine...");
+            ensureGameLoop();
+        }
+
         isSpinning = true;
         spinBtn.disabled = true;
         statusText.innerText = "變身中...";
@@ -702,7 +665,6 @@ function startSpin() {
         }, 8000);
     } catch (e) {
         console.error("Start spin error", e);
-        // 錯誤發生時，強制重置狀態
         isSpinning = false;
         spinBtn.disabled = false;
         statusText.innerText = "準備好了";
@@ -716,7 +678,6 @@ function gameFinished() {
     if (failSafeTimeout) clearTimeout(failSafeTimeout);
     
     const finalIds = reels.map(r => r.currentId);
-    
     if (finalIds[0] === finalIds[1] && finalIds[1] === finalIds[2]) {
         triggerWin(finalIds[0]);
     }
@@ -727,13 +688,11 @@ function determineResult() {
     if (roundCounter >= targetWinRound) {
         isWin = true;
     }
-    
     let res = [];
     if (isWin) {
         const winId = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
         res = [winId, winId, winId];
         roundCounter = 0;
-        // 修改重點：將 1-6 次 改為 1-4 次
         targetWinRound = Math.floor(Math.random() * 4) + 1;
     } else {
         let r1 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
@@ -754,14 +713,11 @@ function triggerWin(foodId) {
     setTimeout(() => {
         const name = foodData[foodId];
         resultFoodName.innerText = name;
-        
-        // 安全地清除內容
         resultImageContainer.innerHTML = '';
-        
         try {
             if (assets[foodId] && assets[foodId].img) {
                 const imgClone = assets[foodId].img.cloneNode();
-                imgClone.className = 'h-full object-contain mx-auto'; // 增加 mx-auto 確保置中
+                imgClone.className = 'h-full object-contain mx-auto'; 
                 resultImageContainer.appendChild(imgClone);
             } else {
                 resultImageContainer.innerText = name;
@@ -770,30 +726,24 @@ function triggerWin(foodId) {
             console.error("Image display error:", e);
             resultImageContainer.innerText = name;
         }
-
-        // 鎖定背景捲動，防止版面跑掉
         document.body.style.overflow = 'hidden';
-
-        // 使用 class 切換來顯示 Modal，確保 pointer-events 和 z-index 正確
         resultModal.classList.add('show');
     }, 500); 
 }
 
 function closeModal() {
-    // 解除背景捲動鎖定
     document.body.style.overflow = '';
-    
-    // 使用 class 切換來隱藏 Modal
     resultModal.classList.remove('show');
     
-    // 【重要修復】雙重保險：強制重置所有狀態，確保下一局可以進行
+    // 【重要修復】關閉視窗時，不管引擎有沒有在跑，都強制重啟一次
+    // 這是為了防止瀏覽器在視窗遮擋時暫停了 requestAnimationFrame
+    ensureGameLoop();
+
     spinBtn.disabled = false;
     isSpinning = false;
 }
 
-// ---- 夢幻粒子系統 (改為彩色圓點) ----
 function createParticles(x, y) {
-    // 增加粒子數量
     for (let i = 0; i < 200; i++) {
         particles.push({
             x: x + (Math.random()-0.5)*800, 
@@ -801,7 +751,6 @@ function createParticles(x, y) {
             vx: (Math.random() - 0.5) * 15,
             vy: (Math.random() - 0.5) * 15,
             life: 1.0,
-            // 糖果色系
             color: `hsl(${Math.random() * 360}, 90%, 75%)`,
             size: Math.random() * 8 + 2
         });
@@ -813,17 +762,14 @@ function updateParticles() {
         const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += 0.2; // 重力輕一點
-        p.life -= 0.015; // 消失慢一點
-        
+        p.vy += 0.2; 
+        p.life -= 0.015; 
         ctx.globalAlpha = p.life;
         ctx.fillStyle = p.color;
         ctx.beginPath();
-        // 圓形粒子
         ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1.0;
-
         if (p.life <= 0) particles.splice(i, 1);
     }
 }
