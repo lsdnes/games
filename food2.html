@@ -262,17 +262,19 @@
     </div>
 
     <!-- 結果彈窗 -->
-    <div id="resultModal" class="fixed inset-0 bg-pink-900/40 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-2 max-w-md w-[90%] transform scale-90 transition-transform duration-300 shadow-2xl">
-            <div class="bg-gradient-to-b from-yellow-50 to-white rounded-2xl p-6 text-center border-4 border-pink-200 border-dashed">
+    <div id="resultModal" class="fixed inset-0 bg-pink-900/40 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 backdrop-blur-sm p-4">
+        <!-- 修改重點：增加 max-h-[90vh] 和 overflow-y-auto 讓手機版內容過長時可以捲動，避免跑版 -->
+        <div class="bg-white rounded-3xl p-1.5 md:p-2 max-w-md w-full max-h-[90vh] overflow-y-auto transform scale-90 transition-transform duration-300 shadow-2xl relative">
+            <div class="bg-gradient-to-b from-yellow-50 to-white rounded-2xl p-5 md:p-6 text-center border-4 border-pink-200 border-dashed">
                 <h2 class="text-3xl md:text-4xl font-black text-pink-500 mb-2 drop-shadow-sm">🎉 哇！決定了 🎉</h2>
                 <div class="text-gray-400 text-sm mb-4 font-bold">魔法廚房為你準備的是...</div>
                 
-                <div class="bg-pink-50 rounded-2xl p-4 mb-6 shadow-inner transform -rotate-1 hover:rotate-0 transition-transform duration-300 border border-pink-100">
-                    <div id="resultImageContainer" class="w-full h-48 flex items-center justify-center overflow-hidden rounded-xl mb-3 bg-white">
+                <div class="bg-pink-50 rounded-2xl p-3 md:p-4 mb-4 md:mb-6 shadow-inner transform -rotate-1 hover:rotate-0 transition-transform duration-300 border border-pink-100">
+                    <!-- 修改重點：手機版圖片高度改為 h-40，避免佔用太多垂直空間 -->
+                    <div id="resultImageContainer" class="w-full h-40 md:h-48 flex items-center justify-center overflow-hidden rounded-xl mb-3 bg-white">
                         <!-- JS 插入圖片 -->
                     </div>
-                    <div id="resultFoodName" class="text-3xl font-black text-gray-700 tracking-wider"></div>
+                    <div id="resultFoodName" class="text-2xl md:text-3xl font-black text-gray-700 tracking-wider"></div>
                 </div>
                 
                 <button onclick="closeModal()" class="w-full py-3 bg-pink-400 hover:bg-pink-300 text-white rounded-xl font-bold text-xl shadow-[0_4px_0_#d64545] active:shadow-none active:translate-y-[4px] transition-all">
