@@ -307,7 +307,8 @@ const resultImageContainer = document.getElementById('resultImageContainer');
 
 // 遊戲參數
 const TOTAL_FOODS = 21;
-let targetWinRound = Math.floor(Math.random() * 6) + 1;
+// 修改重點：將 1-6 次 改為 1-4 次
+let targetWinRound = Math.floor(Math.random() * 4) + 1;
 
 // 版面設定
 const CANVAS_WIDTH = 900;
@@ -689,7 +690,8 @@ function determineResult() {
         const winId = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
         res = [winId, winId, winId];
         roundCounter = 0;
-        targetWinRound = Math.floor(Math.random() * 6) + 1;
+        // 修改重點：將 1-6 次 改為 1-4 次
+        targetWinRound = Math.floor(Math.random() * 4) + 1;
     } else {
         let r1 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
         let r2 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
