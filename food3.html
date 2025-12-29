@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帝國糧草徵收處</title>
+    <!-- 使用 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 引入中世紀風格字體 Cinzel */
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Noto+Serif+TC:wght@400;700&display=swap');
+        
+        :root {
+            --aoe-gold: #c6a666;
+            --aoe-dark: #11151c;
+            --aoe-blue: #1a2c42;
+            --aoe-border: #8c7b52;
+            --parchment: #e6dacc;
+        }
+
+        body {
+            font-family: 'Cinzel', 'Noto Serif TC', serif;
+            background-color: #0b0d12;
+            /* 戰爭迷霧般的背景 */
+            background-image: 
+                radial-gradient(circle at center, rgba(30, 45, 65, 0.8) 0%, #000000 100%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23222' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            color: var(--aoe-gold);
+            overflow-x: hidden;
+        }
+        
+        /* 機台外框：帝國UI風格 */
+        .slot-machine-frame {
+            background: linear-gradient(180deg, #2b3847 0%, #1a232e 100%);
+            border: 2px solid var(--aoe-gold);
+            box-shadow: 
+                0 0 0 4px #000,
+                0 0 0 6px var(--aoe-border),
+                0 20px 50px rgba(0,0,0,0.9),
+                inset 0 0 40px rgba(0,0,0,0.8);
+            position: relative;
+            /* 角落裝飾 (利用 clip-path 或偽元素模擬金色邊角) */
+        }
+        .slot-machine-frame::after {
+            content: "";
+            position: absolute;
+            inset: -8px;
+            border: 2px solid var(--aoe-gold);
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* 螢幕邊框：鐵與木 */
+        .screen-bezel {
+            background: #000;
+            border: 4px solid #4a3e28;
+            padding: 5px;
+            box-shadow: inset 0 0 20px #000;
+            position: relative;
+        }
+        
+        /* 標題特效：金屬光澤 */
+        .title-style {
+            background: linear-gradient(to bottom, #fff5d6 0%, #c6a666 40%, #8c7b52 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            filter: drop-shadow(0 0 2px rgba(198, 166, 102, 0.5));
+            letter-spacing: 2px;
+        }
+        
+        /* 按鈕特效：金色徽章 */
+        .spin-btn {
+            background: linear-gradient(135deg, #967d46 0%, #ffd700 50%, #967d46 100%);
+            color: #2b1d0e;
+            box-shadow: 
+                0 0 0 2px #4a3e28,
+                0 0 0 4px #c6a666,
+                0 10px 20px rgba(0,0,0,0.8);
+            transition: all 0.1s;
+            border: 1px solid rgba(255,255,255,0.4);
+            text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+        }
+        .spin-btn:active {
+            transform: translateY(4px);
+            box-shadow: 
+                0 0 0 2px #4a3e28,
+                0 0 0 4px #8c7b52,
+                inset 0 5px 20px rgba(0,0,0,0.5);
+        }
+        .spin-btn:disabled {
+            background: #333;
+            color: #666;
+            box-shadow: none;
+            border-color: #555;
+            cursor: not-allowed;
+            filter: grayscale(100%);
+        }
+
+        /* 滾輪視窗：羊皮紙質感 */
+        .reel-window {
+            position: relative;
+            overflow: hidden;
+            background: #e6dacc; /* 羊皮紙色 */
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E");
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+            width: 100%;
+            aspect-ratio: 900 / 250; 
+            border: 1px solid #4a3e28;
+        }
+        
+        /* 滾輪遮罩 (漸層變暗) */
+        .reel-shadow-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 主持人圖片外框：兵種卡牌風格 */
+        .host-frame {
+            background: #1a232e;
+            padding: 4px;
+            border: 2px solid var(--aoe-gold);
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        /* 金色邊角裝飾 */
+        .corner-decor {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border: 2px solid var(--aoe-gold);
+            z-index: 5;
+        }
+        .corner-tl { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+        .corner-tr { top: -2px; right: -2px; border-left: none; border-bottom: none; }
+        .corner-bl { bottom: -2px; left: -2px; border-right: none; border-top: none; }
+        .corner-br { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+        /* 狀態顯示框：深色金屬銘牌 */
+        .status-box {
+            background: linear-gradient(to bottom, #2b3847, #1a232e);
+            border: 1px solid var(--aoe-border);
+            color: var(--aoe-gold);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .status-box::before {
+            content: '';
+            position: absolute;
+            top: 2px; bottom: 2px; left: 2px; right: 2px;
+            border: 1px solid rgba(198, 166, 102, 0.2);
+            pointer-events: none;
+        }
+        
+        /* 金色分隔線 */
+        .gold-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--aoe-gold), transparent);
+            margin: 10px 0;
+            opacity: 0.5;
+        }
+
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 md:p-4">
+
+    <!-- 標題區 -->
+    <div class="mb-4 md:mb-8 text-center relative z-10">
+        <h1 class="text-3xl md:text-6xl font-black title-style mb-2 uppercase tracking-widest">
+            帝國糧草徵收
+        </h1>
+        <div class="inline-block bg-black/50 px-6 py-1 border-t border-b border-[#c6a666]">
+            <p class="text-[#c6a666] text-xs md:text-sm tracking-[0.2em]">AGE OF CUISINE • IV</p>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row items-center justify-center gap-6 md:gap-12 w-full max-w-6xl z-10">
+        
+        <!-- 左側：督軍 (主持人) -->
+        <div class="hidden lg:flex flex-col items-center w-1/4">
+            <div class="host-frame w-64 h-auto relative">
+                <!-- 裝飾邊角 -->
+                <div class="corner-decor corner-tl"></div>
+                <div class="corner-decor corner-tr"></div>
+                <div class="corner-decor corner-bl"></div>
+                <div class="corner-decor corner-br"></div>
+                
+                <div class="w-full h-56 overflow-hidden bg-[#0b0d12] relative">
+                    <img id="host-img-desktop" src="" alt="主持人" class="w-full h-full object-cover filter sepia-[0.3] contrast-125" onerror="this.style.display='none'; document.getElementById('host-fallback').style.display='flex'">
+                    <div id="host-fallback" class="hidden absolute inset-0 flex items-center justify-center bg-[#1a232e] text-[#c6a666] flex-col">
+                        <span class="text-4xl">⚔️</span>
+                        <span class="text-xs mt-2 font-bold uppercase">軍需官</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 w-full text-center">
+                <div class="gold-divider"></div>
+                <div class="text-[#8c7b52] text-xs uppercase tracking-widest mb-1">Commander</div>
+                <p id="host-name-desktop" class="text-xl text-[#c6a666] font-bold">糧草督軍</p>
+            </div>
+            
+            <button onclick="setRandomHost()" class="mt-4 text-[#8c7b52] text-xs hover:text-[#c6a666] flex items-center gap-2 transition-colors border border-[#4a3e28] px-4 py-1 hover:bg-[#2b3847]">
+                <span class="text-lg">↻</span> 更換督軍
+            </button>
+        </div>
+
+        <!-- 中間：拉霸機台 -->
+        <div class="slot-machine-frame w-full max-w-3xl p-1 md:p-2">
+            <!-- 頂部裝飾條 -->
+            <div class="flex justify-between items-center mb-2 px-2 py-1 bg-[#111] border-b border-[#4a3e28]">
+                <div class="text-[#c6a666] font-mono text-[10px]">RESOURCE_CACHE_v4.0</div>
+                <div class="flex gap-1">
+                    <div class="w-2 h-2 bg-[#c6a666] rotate-45"></div>
+                    <div class="w-2 h-2 bg-[#8c7b52] rotate-45"></div>
+                </div>
+            </div>
+
+            <!-- 螢幕區 -->
+            <div class="screen-bezel bg-[#0b0d12]">
+                <!-- 中獎線 (紅色雷射改為金色細線) -->
+                <div class="absolute top-1/2 left-0 w-full h-[1px] bg-[#c6a666] z-20 pointer-events-none opacity-50 shadow-[0_0_5px_#ffd700]"></div>
+                
+                <!-- 左右箭頭指示 -->
+                <div class="absolute top-1/2 -left-3 transform -translate-y-1/2 text-[#c6a666] text-xl z-30 drop-shadow-md">►</div>
+                <div class="absolute top-1/2 -right-3 transform -translate-y-1/2 text-[#c6a666] text-xl z-30 drop-shadow-md">◄</div>
+
+                <!-- Canvas -->
+                <div class="reel-window">
+                    <div class="reel-shadow-overlay"></div>
+                    <canvas id="slotCanvas" width="900" height="250" class="w-full h-full block"></canvas>
+                </div>
+            </div>
+
+            <!-- 控制面板區 -->
+            <div class="mt-4 flex flex-col md:flex-row justify-between items-center gap-4 px-2 md:px-6 py-2">
+                
+                <!-- 資源顯示 (Round) -->
+                <div class="status-box p-2 w-full md:w-auto text-center min-w-[140px]">
+                    <div class="text-[#8c7b52] text-[10px] uppercase tracking-widest mb-1">Campaign Year</div>
+                    <div id="roundCount" class="text-[#fff] font-serif text-2xl drop-shadow-md">1066</div>
+                </div>
+
+                <!-- 啟動按鈕 -->
+                <button id="spinBtn" class="spin-btn rounded-sm w-full md:w-48 h-16 md:h-20 flex items-center justify-center relative group shrink-0 clip-path-polygon">
+                    <div class="text-center flex flex-col items-center">
+                        <span class="block font-black text-xl md:text-2xl tracking-[0.2em] uppercase">Mobilize</span>
+                        <span class="block text-[10px] uppercase font-bold text-[#4a3e28]">徵收糧食</span>
+                    </div>
+                </button>
+
+                <!-- 狀態顯示 -->
+                <div class="status-box p-2 w-full md:w-auto text-center min-w-[140px]">
+                    <div class="text-[#8c7b52] text-[10px] uppercase tracking-widest mb-1">Status</div>
+                    <div id="statusText" class="text-[#c6a666] font-bold text-sm uppercase">Standing By</div>
+                </div>
+            </div>
+            
+            <!-- 手機版主持人 -->
+            <div class="lg:hidden mt-4 flex items-center gap-3 bg-[#1a232e] p-2 border border-[#4a3e28] relative">
+                <div class="w-12 h-12 border border-[#c6a666] flex-shrink-0">
+                    <img id="host-img-mobile" src="" class="w-full h-full object-cover filter sepia-[0.3]">
+                </div>
+                <div class="flex-grow">
+                    <div class="text-[10px] text-[#8c7b52] uppercase">Commander</div>
+                    <div class="text-[#c6a666] font-bold">糧草督軍</div>
+                </div>
+                <button onclick="setRandomHost()" class="p-2 text-[#8c7b52] hover:text-[#c6a666]" title="更換督軍">
+                     <span class="text-xl">↻</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果彈窗：羊皮紙捲軸風格 -->
+    <div id="resultModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500 p-4">
+        <div class="relative max-w-md w-full max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-500">
+            <!-- 捲軸頂部裝飾 -->
+            <div class="h-6 bg-[#2b1d0e] rounded-t-lg border-b border-[#4a3e28]"></div>
+            
+            <!-- 捲軸本體 -->
+            <div class="bg-[#e6dacc] p-6 text-center border-x-8 border-[#2b1d0e] shadow-[0_0_50px_rgba(0,0,0,1)] relative overflow-hidden">
+                <!-- 紋理疊加 -->
+                <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: url('data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.5\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100\' height=\'100\' filter=\'url(%23noise)\'/%3E%3C/svg%3E');"></div>
+                
+                <h2 class="text-3xl font-black text-[#2b1d0e] mb-2 uppercase tracking-widest font-serif border-b-2 border-[#2b1d0e] inline-block pb-1">Victory</h2>
+                <div class="text-[#5c4d35] text-sm mb-6 font-bold uppercase tracking-wide mt-2">Supplies Secured</div>
+                
+                <div class="bg-[#d6caba] p-4 mb-6 shadow-inner border border-[#b5a690] relative">
+                    <div id="resultImageContainer" class="w-full h-40 md:h-48 flex items-center justify-center overflow-hidden mb-3 bg-[#e6dacc] border border-[#b5a690] sepia-[0.2]">
+                        <!-- JS 插入圖片 -->
+                    </div>
+                    <div id="resultFoodName" class="text-3xl font-black text-[#2b1d0e] tracking-widest font-serif"></div>
+                </div>
+                
+                <button onclick="closeModal()" class="w-full py-3 bg-[#8c1c1c] hover:bg-[#a62222] text-[#ffcc00] border-2 border-[#ffcc00] shadow-[0_4px_0_#4a0e0e] active:shadow-none active:translate-y-[2px] transition-all font-serif font-bold text-lg uppercase tracking-widest">
+                    Next Campaign
+                </button>
+            </div>
+            
+            <!-- 捲軸底部裝飾 -->
+            <div class="h-6 bg-[#2b1d0e] rounded-b-lg border-t border-[#4a3e28]"></div>
+        </div>
+    </div>
+
+<script>
+/**
+ * 食物與資料設定
+ */
+const foodData = {
+    "food1": "水餃", "food2": "蚵仔麵線", "food3": "魯肉飯", "food4": "義大利麵", "food5": "披薩",
+    "food6": "豬腳飯", "food7": "牛肉麵", "food8": "肉圓", "food9": "乾麵", "food10": "貢丸湯",
+    "food11": "漢堡", "food12": "壽司", "food13": "炸雞", "food14": "涼麵", "food15": "排骨飯",
+    "food16": "沙拉", "food17": "鹹酥雞", "food18": "鯖魚飯", "food19": "燙青菜", "food20": "吃火鍋",
+    "food21": "吃拉麵"
+};
+
+const canvas = document.getElementById('slotCanvas');
+const ctx = canvas.getContext('2d');
+const spinBtn = document.getElementById('spinBtn');
+const roundCountEl = document.getElementById('roundCount');
+const statusText = document.getElementById('statusText');
+const resultModal = document.getElementById('resultModal');
+const resultFoodName = document.getElementById('resultFoodName');
+const resultImageContainer = document.getElementById('resultImageContainer');
+
+// 遊戲參數
+const TOTAL_FOODS = 21;
+// 修改重點：初始目標設為 1~4 次
+let targetWinRound = Math.floor(Math.random() * 4) + 1;
+
+// 版面設定
+const CANVAS_WIDTH = 900;
+const CANVAS_HEIGHT = 250;
+const REEL_COUNT = 3;
+const SYMBOL_WIDTH = CANVAS_WIDTH / REEL_COUNT; 
+const SYMBOL_HEIGHT = CANVAS_HEIGHT; 
+
+let assets = {};
+let hostImages = []; 
+let reels = [];
+let isSpinning = false;
+let roundCounter = 0; // 改為顯示年份
+let currentYear = 1066;
+let particles = [];
+let failSafeTimeout = null;
+
+// 音效 Context
+let audioCtx = null;
+
+/**
+ * 世紀帝國風音效合成器 (Medieval/War Sound Design)
+ */
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function playSound(type) {
+    if (!audioCtx) return;
+    
+    const now = audioCtx.currentTime;
+
+    if (type === 'spin') {
+        // 投石機絞盤聲 / 沉重機械滾動 (Low rumbling noise + rhythmic clicks)
+        
+        // 1. 低頻噪音 (Rumble)
+        const bufferSize = audioCtx.sampleRate * 0.15;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        
+        const noiseFilter = audioCtx.createBiquadFilter();
+        noiseFilter.type = 'lowpass';
+        noiseFilter.frequency.value = 200;
+        
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.3, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(audioCtx.destination);
+        noise.start(now);
+        
+        // 2. 木頭撞擊聲 (Click)
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(100, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.05);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.05);
+    } 
+    else if (type === 'stop') {
+        // 金屬重擊聲 / 劍盾碰撞 (Sword Clang / Anvil)
+        
+        // 金屬泛音
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth'; // 鋸齒波比較刺耳像金屬
+        osc.frequency.setValueAtTime(400, now); // 基頻
+        
+        // 快速滑音模擬撞擊震動
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.2); 
+        
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+        
+        // 高頻金屬聲 (Ring)
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(1200, now);
+        gain2.gain.setValueAtTime(0.1, now);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.8); // 餘音較長
+        
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.start(now);
+        osc2.stop(now + 0.8);
+    } 
+    else if (type === 'win') {
+        // 勝利號角 (Brass Fanfare)
+        // 模擬銅管樂器：Sawtooth wave + Lowpass filter envelope
+        const notes = [
+            523.25, // C5
+            659.25, // E5
+            783.99, // G5
+            1046.50 // C6
+        ]; 
+        
+        // 節奏：登-登-登-------
+        const rhythm = [0, 0.15, 0.3, 0.6];
+        const durations = [0.1, 0.1, 0.1, 1.5];
+
+        notes.forEach((freq, i) => {
+            const startTime = now + rhythm[i];
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+            
+            osc.type = 'sawtooth';
+            osc.frequency.value = freq;
+            
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(500, startTime);
+            filter.frequency.exponentialRampToValueAtTime(3000, startTime + 0.1); // 銅管樂器的 "Blare" 效果
+            
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+            gain.gain.linearRampToValueAtTime(0.2, startTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, startTime + durations[i]);
+            
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start(startTime);
+            osc.stop(startTime + durations[i]);
+        });
+        
+        // 低音鼓 (Timpani Roll)
+        const drumOsc = audioCtx.createOscillator();
+        const drumGain = audioCtx.createGain();
+        drumOsc.frequency.setValueAtTime(80, now);
+        drumOsc.type = 'square'; // 比較粗糙
+        drumGain.gain.setValueAtTime(0.2, now);
+        drumGain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+        
+        drumOsc.connect(drumGain);
+        drumGain.connect(audioCtx.destination);
+        drumOsc.start(now);
+        drumOsc.stop(now + 1.0);
+    }
+}
+
+/**
+ * 資源載入
+ */
+async function loadAssets() {
+    const promises = [];
+    
+    // 載入食物圖片
+    for (let i = 1; i <= TOTAL_FOODS; i++) {
+        const id = `food${i}`;
+        const p = new Promise((resolve) => {
+            const img = new Image();
+            img.src = `jpg/${id}.jpg`;
+            img.onload = () => resolve({ id, img, status: 'ok' });
+            img.onerror = () => resolve({ id, img: null, status: 'error' });
+        }).then(data => {
+            assets[data.id] = data;
+        });
+        promises.push(p);
+    }
+    
+    // 載入主持人圖片
+    for (let i = 1; i <= 11; i++) {
+         const fname = `jpg/P${i}.jpg`;
+         const p = new Promise((resolve) => {
+            const img = new Image();
+            img.src = fname;
+            img.onload = () => resolve(fname);
+            img.onerror = () => resolve(null);
+        }).then(validName => {
+            if(validName) hostImages.push(validName);
+        });
+        promises.push(p);
+    }
+
+    await Promise.all(promises);
+    setRandomHost();
+    initGame();
+}
+
+function setRandomHost() {
+    let filename = 'jpg/P1.jpg';
+    if (hostImages.length > 0) {
+        filename = hostImages[Math.floor(Math.random() * hostImages.length)];
+    }
+    const dImg = document.getElementById('host-img-desktop');
+    const mImg = document.getElementById('host-img-mobile');
+    dImg.style.display = 'block';
+    document.getElementById('host-fallback').style.display = 'none';
+    mImg.style.display = 'block';
+    dImg.src = filename;
+    mImg.src = filename;
+}
+
+/**
+ * 滾輪邏輯
+ */
+class Reel {
+    constructor(index) {
+        this.index = index;
+        this.x = index * SYMBOL_WIDTH;
+        this.offsetY = 0; 
+        this.speed = 0;
+        this.isStopping = false;
+        this.currentId = this.getRandomFoodId();
+        this.nextId = this.getRandomFoodId();
+        this.targetId = null;
+        this.isLocked = false;
+    }
+
+    getRandomFoodId() {
+        return `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+    }
+
+    start() {
+        this.speed = 40; 
+        this.isStopping = false;
+        this.isLocked = false;
+        this.targetId = null;
+    }
+
+    stop(target) {
+        this.isStopping = true;
+        this.targetId = target;
+    }
+
+    update() {
+        if (this.isLocked) return;
+
+        if (this.speed > 0) {
+            this.offsetY += this.speed;
+            
+            if (this.offsetY >= SYMBOL_HEIGHT) {
+                this.offsetY = 0; 
+                this.currentId = this.nextId;
+                
+                if (this.isStopping) {
+                    if (this.currentId === this.targetId) {
+                        this.speed = 0;
+                        this.isLocked = true;
+                        playSound('stop');
+                        return;
+                    } 
+                    else {
+                        this.nextId = this.targetId;
+                    }
+                } else {
+                    this.nextId = this.getRandomFoodId();
+                }
+                
+                if (isSpinning) playSound('spin');
+            }
+        }
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
+        ctx.clip();
+
+        // 繪製背景：羊皮紙紋理
+        ctx.fillStyle = '#e6dacc';
+        ctx.fillRect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
+        
+        // 繪製細微紋理 (噪點)
+        ctx.fillStyle = "rgba(0,0,0,0.05)";
+        if (this.index % 2 !== 0) ctx.fillRect(this.x, 0, SYMBOL_WIDTH, CANVAS_HEIGHT);
+
+        const yCurrent = this.offsetY; 
+        const yNext = this.offsetY - SYMBOL_HEIGHT;
+        
+        this.drawSymbol(ctx, this.currentId, this.x, yCurrent);
+        this.drawSymbol(ctx, this.nextId, this.x, yNext);
+
+        // 分隔線：深色木紋
+        if (this.index < REEL_COUNT - 1) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#8c7b52';
+            ctx.lineWidth = 2;
+            ctx.moveTo(this.x + SYMBOL_WIDTH, 0);
+            ctx.lineTo(this.x + SYMBOL_WIDTH, CANVAS_HEIGHT);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+    drawSymbol(ctx, id, x, y) {
+        const asset = assets[id];
+        const padding = 20;
+        const w = SYMBOL_WIDTH - padding * 2;
+        const h = SYMBOL_HEIGHT - padding * 2;
+        const cx = x + padding;
+        const cy = y + padding;
+
+        if (asset && asset.img) {
+            ctx.save();
+            // 讓圖片帶點復古濾鏡
+            if (this.speed > 0 && !this.isLocked) { 
+                ctx.filter = `blur(1px) sepia(0.4)`; 
+                const stretch = this.speed * 1.5;
+                ctx.drawImage(asset.img, cx, cy - stretch/2, w, h + stretch);
+            } else {
+                ctx.filter = `sepia(0.3) contrast(1.1)`; 
+                ctx.shadowColor = "rgba(0,0,0,0.4)";
+                ctx.shadowBlur = 5;
+                ctx.shadowOffsetY = 4;
+                ctx.drawImage(asset.img, cx, cy, w, h);
+            }
+            ctx.restore();
+        } else {
+            // 文字 Fallback
+            ctx.fillStyle = '#2b1d0e';
+            ctx.font = 'bold 30px "Noto Serif TC"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(foodData[id] || id, x + SYMBOL_WIDTH/2, y + SYMBOL_HEIGHT/2);
+        }
+    }
+}
+
+function initGame() {
+    reels = [new Reel(0), new Reel(1), new Reel(2)];
+    loop();
+}
+
+function loop() {
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    
+    let allLocked = true;
+    
+    reels.forEach(r => {
+        r.update();
+        r.draw(ctx);
+        if (!r.isLocked) allLocked = false;
+    });
+
+    if (isSpinning && allLocked) {
+        gameFinished();
+    }
+    
+    updateParticles();
+    animationId = requestAnimationFrame(loop);
+}
+
+spinBtn.addEventListener('click', () => {
+    if (isSpinning) return;
+    initAudio(); 
+    startSpin();
+});
+
+function startSpin() {
+    isSpinning = true;
+    spinBtn.disabled = true;
+    statusText.innerText = "MOBILIZING...";
+    
+    // 增加年份
+    roundCounter++;
+    currentYear += Math.floor(Math.random() * 50) + 10;
+    roundCountEl.innerText = currentYear;
+
+    reels.forEach(r => r.start());
+
+    const result = determineResult();
+    
+    setTimeout(() => reels[0].stop(result[0]), 2000);
+    setTimeout(() => reels[1].stop(result[1]), 2500);
+    setTimeout(() => reels[2].stop(result[2]), 3000);
+
+    if (failSafeTimeout) clearTimeout(failSafeTimeout);
+    failSafeTimeout = setTimeout(() => {
+        if (isSpinning) {
+            reels.forEach((r, idx) => {
+                r.speed = 0;
+                r.isLocked = true;
+                r.currentId = result[idx]; 
+                r.offsetY = 0;
+            });
+            gameFinished();
+        }
+    }, 8000);
+}
+
+function gameFinished() {
+    isSpinning = false;
+    spinBtn.disabled = false;
+    statusText.innerText = "ORDERS AWAIT";
+    if (failSafeTimeout) clearTimeout(failSafeTimeout);
+    
+    const finalIds = reels.map(r => r.currentId);
+    
+    if (finalIds[0] === finalIds[1] && finalIds[1] === finalIds[2]) {
+        triggerWin(finalIds[0]);
+    }
+}
+
+function determineResult() {
+    let isWin = false;
+    // 邏輯稍微調整：目標回合到了就贏
+    if (roundCounter >= targetWinRound) {
+        isWin = true;
+    }
+    
+    let res = [];
+    if (isWin) {
+        const winId = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        res = [winId, winId, winId];
+        roundCounter = 0;
+        // 修改重點：重置後的目標也設為 1~4 次
+        targetWinRound = Math.floor(Math.random() * 4) + 1;
+    } else {
+        let r1 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        let r2 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        let r3 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        while (r1 === r2 && r2 === r3) {
+            r3 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
+        }
+        res = [r1, r2, r3];
+    }
+    return res;
+}
+
+function triggerWin(foodId) {
+    playSound('win'); 
+    createParticles(CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
+    
+    setTimeout(() => {
+        const name = foodData[foodId];
+        resultFoodName.innerText = name;
+        
+        resultImageContainer.innerHTML = '';
+        if (assets[foodId].img) {
+            const imgClone = assets[foodId].img.cloneNode();
+            imgClone.className = 'h-full object-contain';
+            resultImageContainer.appendChild(imgClone);
+        } else {
+            resultImageContainer.innerText = name;
+        }
+
+        resultModal.style.pointerEvents = 'auto';
+        resultModal.style.opacity = '1';
+        resultModal.querySelector('div').style.transform = 'scale(1)';
+    }, 800); // 稍微延遲讓號角響完
+}
+
+function closeModal() {
+    resultModal.style.opacity = '0';
+    resultModal.style.pointerEvents = 'none';
+    resultModal.querySelector('div').style.transform = 'scale(0.95)';
+}
+
+// ---- 戰場火星粒子系統 (Sparks & Embers) ----
+function createParticles(x, y) {
+    for (let i = 0; i < 150; i++) {
+        particles.push({
+            x: x + (Math.random()-0.5)*800, 
+            y: y + (Math.random()-0.5)*200,
+            vx: (Math.random() - 0.5) * 15,
+            vy: (Math.random() - 0.5) * 15 - 2, // 往上飄 (火星)
+            life: 1.0,
+            // 金色/橙色火光
+            color: `rgba(255, ${Math.floor(Math.random() * 150 + 50)}, 0, 1)`,
+            size: Math.random() * 4 + 1
+        });
+    }
+}
+
+function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.05; // 輕微重力
+        p.life -= 0.01; 
+        
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.rect(p.x, p.y, p.size, p.size); // 方形粒子更有像素/復古感
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+}
+
+window.onload = loadAssets;
+
+</script>
+</body>
+</html>
