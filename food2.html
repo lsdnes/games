@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>今天吃什麼？魔法廚房</title>
     <!-- 使用 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,13 +14,17 @@
             /* 字體改成圓潤可愛風 */
             font-family: 'Zen Maru Gothic', 'Fredoka', sans-serif;
             background-color: #fff0f5;
+            /* 禁止雙擊縮放，優化手機體驗 */
             touch-action: manipulation;
             /* 夢幻雲朵背景 */
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(255, 200, 221, 0.5) 0%, transparent 20%),
                 radial-gradient(circle at 90% 80%, rgba(180, 220, 255, 0.5) 0%, transparent 20%),
                 linear-gradient(135deg, #fff0f5 0%, #e6e6fa 100%);
+            /* 預設隱藏水平捲動 */
             overflow-x: hidden;
+            width: 100vw;
+            min-height: 100vh;
         }
         
         /* 機台外框：糖果屋風格 */
@@ -143,7 +147,7 @@
 
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-2 md:p-4">
+<body class="flex flex-col items-center justify-center p-2 md:p-4">
 
     <!-- 裝飾背景雲朵 -->
     <div class="cloud w-24 h-24 top-10 left-0"></div>
@@ -492,6 +496,8 @@ class Reel {
         this.isStopping = false;
         this.isLocked = false;
         this.targetId = null;
+        // 強制校正偏移量，避免長時間運作後位置偏移導致版面跑掉
+        this.offsetY = 0; 
     }
 
     stop(target) {
@@ -712,25 +718,41 @@ function triggerWin(foodId) {
         const name = foodData[foodId];
         resultFoodName.innerText = name;
         
+        // 安全地清除內容
         resultImageContainer.innerHTML = '';
-        if (assets[foodId].img) {
-            const imgClone = assets[foodId].img.cloneNode();
-            imgClone.className = 'h-full object-contain';
-            resultImageContainer.appendChild(imgClone);
-        } else {
+        
+        try {
+            if (assets[foodId] && assets[foodId].img) {
+                const imgClone = assets[foodId].img.cloneNode();
+                imgClone.className = 'h-full object-contain mx-auto'; // 增加 mx-auto 確保置中
+                resultImageContainer.appendChild(imgClone);
+            } else {
+                resultImageContainer.innerText = name;
+            }
+        } catch (e) {
+            console.error("Image display error:", e);
             resultImageContainer.innerText = name;
         }
+
+        // 鎖定背景捲動，防止版面跑掉
+        document.body.style.overflow = 'hidden';
 
         resultModal.style.pointerEvents = 'auto';
         resultModal.style.opacity = '1';
         resultModal.querySelector('div').style.transform = 'scale(1)';
-    }, 500); // 稍微延遲一點讓星星飛一下
+    }, 500); 
 }
 
 function closeModal() {
+    // 解除背景捲動鎖定
+    document.body.style.overflow = '';
+    
     resultModal.style.opacity = '0';
     resultModal.style.pointerEvents = 'none';
     resultModal.querySelector('div').style.transform = 'scale(0.9)';
+    
+    // 雙重保險：確保按鈕啟用
+    spinBtn.disabled = false;
 }
 
 // ---- 夢幻粒子系統 (改為彩色圓點) ----
