@@ -248,8 +248,8 @@ const resultImageContainer = document.getElementById('resultImageContainer');
 
 // 遊戲參數
 const TOTAL_FOODS = 21;
-// 隨機決定本輪要玩幾次才會中獎 (1~6)
-let targetWinRound = Math.floor(Math.random() * 6) + 1;
+// 隨機決定本輪要玩幾次才會中獎 (1~4) - 更新：原本是 6，改為 4
+let targetWinRound = Math.floor(Math.random() * 4) + 1;
 
 // 版面設定
 const CANVAS_WIDTH = 900;
@@ -638,9 +638,10 @@ function determineResult() {
         const winId = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
         res = [winId, winId, winId];
 
-        // 重置局數，並隨機產生下一次的目標 (1~6)
+        // 重置局數，並隨機產生下一次的目標 (1~4)
+        // 更新：原本是 6，改為 4
         roundCounter = 0;
-        targetWinRound = Math.floor(Math.random() * 6) + 1;
+        targetWinRound = Math.floor(Math.random() * 4) + 1;
     } else {
         // 沒中，產生三個不同的
         let r1 = `food${Math.floor(Math.random() * TOTAL_FOODS) + 1}`;
