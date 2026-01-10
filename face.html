@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 視角編輯器 PRO</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Font (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f1115;
+            color: #e2e8f0;
+        }
+
+        /* Custom Range Slider Styles */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #6366f1; /* Indigo 500 */
+            cursor: pointer;
+            margin-top: -6px; 
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #1e293b;
+            border-radius: 2px;
+        }
+
+        /* Hide Scrollbar but allow scrolling */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Animations */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .animate-spin-custom { animation: spin 1s linear infinite; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Sidebar (Desktop) -->
+    <aside id="sidebar" class="hidden md:flex flex-col border-r border-slate-800 bg-[#161920] w-80 transition-all duration-300">
+        <div class="p-6 border-b border-slate-800 flex items-center justify-between shrink-0">
+            <div class="flex items-center space-x-2">
+                <div class="bg-indigo-600 p-1.5 rounded-lg">
+                    <i data-lucide="camera" class="w-5 h-5 text-white"></i>
+                </div>
+                <h1 class="font-bold text-lg tracking-tight">視角編輯器 <span class="text-indigo-500">PRO</span></h1>
+            </div>
+            <!-- Close Sidebar Button (Optional functionality) -->
+        </div>
+        
+        <div class="flex-1 overflow-y-auto no-scrollbar p-6">
+            <!-- Control Panel Content is injected here via JS for reusability, or hardcoded below -->
+            <div id="desktop-controls"></div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+        
+        <!-- Header -->
+        <header class="h-16 border-b border-slate-800 flex items-center justify-between px-4 md:px-8 bg-[#161920]/80 backdrop-blur-md shrink-0 z-20">
+            <div class="flex items-center space-x-3">
+                <div class="md:hidden flex items-center space-x-2">
+                    <i data-lucide="camera" class="w-5 h-5 text-indigo-500"></i>
+                    <span class="font-bold text-sm">PERSPECTIVE PRO</span>
+                </div>
+                <div id="status-badge" class="hidden sm:flex items-center px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700">
+                    <div id="status-dot" class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                    <span id="status-text" class="text-xs font-mono text-slate-400">READY</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="resetApp()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors" title="重置">
+                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                </button>
+                <button onclick="downloadImage()" id="download-btn" class="hidden flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-indigo-500/20">
+                    <i data-lucide="download" class="w-4 h-4 mr-2"></i> 
+                    <span class="hidden sm:inline">匯出</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Canvas Area -->
+        <div class="flex-1 bg-[#0f1115] relative overflow-hidden flex items-center justify-center p-4 md:p-8">
+            
+            <!-- Grid Background -->
+            <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(#2d3342 1px, transparent 1px); background-size: 24px 24px;"></div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="text-center space-y-6 opacity-40 select-none fade-in">
+                <div class="w-32 h-32 border-2 border-dashed border-slate-600 rounded-3xl mx-auto flex items-center justify-center">
+                    <i data-lucide="image" class="w-12 h-12 text-slate-500"></i>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-xl font-bold text-slate-300">準備就緒</h3>
+                    <p class="text-slate-500 text-sm max-w-xs mx-auto">輸入描述並點擊生成，或上傳圖片開始編輯</p>
+                </div>
+            </div>
+
+            <!-- Image Container -->
+            <div id="image-container" class="hidden relative shadow-2xl rounded-lg overflow-hidden max-w-full max-h-full border border-slate-800 group fade-in">
+                <img id="main-image" src="" alt="Main View" class="max-w-full max-h-[75vh] md:max-h-[85vh] object-contain bg-[#161920]">
+                <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="openFullImage()" class="p-2 bg-black/50 hover:bg-black/70 backdrop-blur text-white rounded-lg">
+                        <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div id="loading-overlay" class="hidden absolute inset-0 bg-[#0f1115]/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+                <div class="relative">
+                    <div class="w-16 h-16 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin-custom"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i data-lucide="sparkles" class="w-6 h-6 text-indigo-400"></i>
+                    </div>
+                </div>
+                <p class="mt-6 text-indigo-300 font-bold tracking-widest text-xs animate-pulse">AI PROCESSING...</p>
+            </div>
+        </div>
+
+        <!-- Mobile Bottom Bar -->
+        <div class="md:hidden border-t border-slate-800 bg-[#161920] p-4 shrink-0 z-40">
+            <button onclick="toggleMobileDrawer(true)" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-sm flex items-center justify-center transition-all border border-slate-700">
+                <i data-lucide="settings-2" class="w-4 h-4 mr-2"></i>
+                調整參數與生成
+            </button>
+        </div>
+
+        <!-- Mobile Drawer Overlay -->
+        <div id="mobile-drawer" class="hidden absolute inset-0 z-50 bg-[#161920] flex-col slide-up">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between shrink-0 bg-[#161920]">
+                <h2 class="font-bold text-lg flex items-center">
+                    <i data-lucide="settings-2" class="w-5 h-5 mr-2 text-indigo-500"></i>
+                    控制面板
+                </h2>
+                <button onclick="toggleMobileDrawer(false)" class="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white">
+                    <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto pb-8 p-4">
+                <div id="mobile-controls"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Template for Controls (Will be cloned to Desktop and Mobile containers) -->
+    <template id="controls-template">
+        <div class="space-y-6">
+            <!-- Input Section -->
+            <section class="space-y-4">
+                <div class="flex items-center text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    <i data-lucide="layers" class="w-3 h-3 mr-2"></i> 來源輸入
+                </div>
+                <div class="space-y-3">
+                    <div class="relative group">
+                        <textarea 
+                            id="prompt-input"
+                            class="w-full bg-[#1e222d] border border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none outline-none text-white placeholder-slate-500"
+                            rows="3" 
+                            placeholder="輸入描述或指令..."
+                        >一個陽光普照的森林教室，木造桌椅</textarea>
+                        <button onclick="generateInitialImage()" class="absolute bottom-2 right-2 p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-all shadow-md">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <input type="file" id="file-upload" hidden onchange="handleFileUpload(this)">
+                        <label for="file-upload" class="flex items-center justify-center w-full py-2 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-xs font-bold cursor-pointer transition-all text-slate-300">
+                            <i data-lucide="upload" class="w-3 h-3 mr-2"></i> 上傳圖片
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Parameters Section -->
+            <section class="space-y-6">
+                <div class="flex items-center text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    <i data-lucide="settings-2" class="w-3 h-3 mr-2"></i> 視角參數
+                </div>
+                <div class="space-y-5">
+                    <!-- Orbit -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-400">環繞角度 Orbit</span>
+                            <span class="text-indigo-400 font-mono"><span class="orbit-val">0</span>°</span>
+                        </div>
+                        <input type="range" min="-180" max="180" value="0" class="orbit-slider w-full h-1.5 bg-slate-800 rounded-lg appearance-none" oninput="updateSliderVal('orbit', this.value)">
+                    </div>
+                    <!-- Pitch -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-400">仰角 Pitch</span>
+                            <span class="text-indigo-400 font-mono"><span class="pitch-val">0</span>°</span>
+                        </div>
+                        <input type="range" min="-45" max="45" value="0" class="pitch-slider w-full h-1.5 bg-slate-800 rounded-lg appearance-none" oninput="updateSliderVal('pitch', this.value)">
+                    </div>
+                    <!-- Zoom -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-400">焦距 Zoom</span>
+                            <span class="text-indigo-400 font-mono"><span class="zoom-val">50</span>mm</span>
+                        </div>
+                        <input type="range" min="14" max="200" value="50" class="zoom-slider w-full h-1.5 bg-slate-800 rounded-lg appearance-none" oninput="updateSliderVal('zoom', this.value)">
+                    </div>
+                </div>
+
+                <button onclick="applyPerspective()" id="render-btn" disabled class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed rounded-2xl font-bold text-sm shadow-xl transition-all flex items-center justify-center text-white">
+                    <i data-lucide="zap" class="w-4 h-4 mr-2"></i>
+                    <span class="btn-text">渲染新視角</span>
+                </button>
+            </section>
+        </div>
+    </template>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Configuration ---
+        const apiKey = ""; // API Key 會由執行環境提供
+        const IMG_GEN_MODEL = "imagen-4.0-generate-001";
+        const IMG_EDIT_MODEL = "gemini-2.5-flash-image-preview";
+
+        // --- State ---
+        let state = {
+            baseImage: null,    // 原始 Base64
+            currentImage: null, // 顯示中的 Base64
+            prompt: "一個陽光普照的森林教室，木造桌椅",
+            orbit: 0,
+            pitch: 0,
+            zoom: 50,
+            isLoading: false
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderControls();
+            lucide.createIcons();
+            
+            // Sync inputs between desktop and mobile if needed
+            // For simplicity, we update state and re-render values
+        });
+
+        // --- UI Rendering ---
+        function renderControls() {
+            const template = document.getElementById('controls-template');
+            const desktopContainer = document.getElementById('desktop-controls');
+            const mobileContainer = document.getElementById('mobile-controls');
+
+            // Clone to Desktop
+            const desktopClone = template.content.cloneNode(true);
+            updateControlIds(desktopClone, 'd');
+            desktopContainer.appendChild(desktopClone);
+
+            // Clone to Mobile
+            const mobileClone = template.content.cloneNode(true);
+            updateControlIds(mobileClone, 'm');
+            mobileContainer.appendChild(mobileClone);
+        }
+
+        // Helper to make IDs unique and bind events
+        function updateControlIds(fragment, suffix) {
+            // Update Textarea
+            const textarea = fragment.querySelector('textarea');
+            textarea.value = state.prompt;
+            textarea.oninput = (e) => {
+                state.prompt = e.target.value;
+                document.querySelectorAll('textarea').forEach(t => t.value = state.prompt);
+            };
+
+            // Update Sliders
+            ['orbit', 'pitch', 'zoom'].forEach(key => {
+                const slider = fragment.querySelector(`.${key}-slider`);
+                const label = fragment.querySelector(`.${key}-val`);
+                
+                slider.value = state[key];
+                label.textContent = state[key];
+
+                slider.oninput = (e) => updateSliderVal(key, e.target.value);
+            });
+
+            // Update Render Button
+            const btn = fragment.querySelector('#render-btn');
+            btn.id = `render-btn-${suffix}`;
+        }
+
+        function updateSliderVal(key, value) {
+            state[key] = value;
+            // Update all sliders of this type (sync desktop/mobile)
+            document.querySelectorAll(`.${key}-slider`).forEach(el => el.value = value);
+            document.querySelectorAll(`.${key}-val`).forEach(el => el.textContent = value);
+        }
+
+        function toggleMobileDrawer(show) {
+            const drawer = document.getElementById('mobile-drawer');
+            if (show) {
+                drawer.classList.remove('hidden');
+                drawer.classList.add('flex');
+            } else {
+                drawer.classList.add('hidden');
+                drawer.classList.remove('flex');
+            }
+        }
+
+        function updateUIState() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const emptyState = document.getElementById('empty-state');
+            const imgContainer = document.getElementById('image-container');
+            const mainImage = document.getElementById('main-image');
+            const downloadBtn = document.getElementById('download-btn');
+            const statusText = document.getElementById('status-text');
+            const statusDot = document.getElementById('status-dot');
+            const renderBtns = document.querySelectorAll('[id^="render-btn-"]');
+
+            // Loading State
+            if (state.isLoading) {
+                loadingOverlay.classList.remove('hidden');
+                statusText.textContent = "GENERATING";
+                statusText.classList.add('text-indigo-400', 'animate-pulse');
+                statusDot.classList.replace('bg-green-500', 'bg-indigo-500');
+                statusDot.classList.add('animate-pulse');
+            } else {
+                loadingOverlay.classList.add('hidden');
+                statusText.textContent = "READY";
+                statusText.classList.remove('text-indigo-400', 'animate-pulse');
+                statusDot.classList.replace('bg-indigo-500', 'bg-green-500');
+                statusDot.classList.remove('animate-pulse');
+            }
+
+            // Image Display
+            if (state.currentImage) {
+                mainImage.src = state.currentImage;
+                imgContainer.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+                downloadBtn.classList.remove('hidden');
+                
+                // Enable Render Buttons
+                renderBtns.forEach(btn => {
+                    btn.disabled = false;
+                    btn.querySelector('.btn-text').textContent = "渲染新視角";
+                });
+            } else {
+                imgContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                downloadBtn.classList.add('hidden');
+                
+                // Disable Render Buttons
+                renderBtns.forEach(btn => btn.disabled = true);
+            }
+        }
+
+        // --- Logic & API ---
+
+        async function fetchWithRetry(url, options, retries = 3) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) return await response.json();
+                    if (response.status !== 429 && response.status < 500) throw new Error(`API Error: ${response.status}`);
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    await new Promise(res => setTimeout(res, 1000 * (i + 1)));
+                }
+            }
+        }
+
+        async function generateInitialImage() {
+            if (!state.prompt) return alert("請輸入描述");
+            
+            state.isLoading = true;
+            updateUIState();
+            
+            // Close mobile drawer if open
+            toggleMobileDrawer(false);
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${IMG_GEN_MODEL}:predict?key=${apiKey}`;
+                const data = await fetchWithRetry(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instances: { prompt: `${state.prompt}, cinematic lighting, high resolution` },
+                        parameters: { sampleCount: 1 }
+                    })
+                });
+
+                if (data.predictions && data.predictions[0]) {
+                    const b64 = data.predictions[0].bytesBase64Encoded;
+                    const imageUrl = `data:image/png;base64,${b64}`;
+                    state.baseImage = imageUrl;
+                    state.currentImage = imageUrl;
+                } else {
+                    console.error("No predictions found", data);
+                    alert("生成失敗，請稍後再試。");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("API 錯誤：" + err.message);
+            } finally {
+                state.isLoading = false;
+                updateUIState();
+            }
+        }
+
+        async function applyPerspective() {
+            if (!state.baseImage) return;
+
+            state.isLoading = true;
+            updateUIState();
+            toggleMobileDrawer(false);
+
+            // Construct Prompt
+            const orbitDesc = state.orbit > 30 ? "viewed from the far right" : state.orbit < -30 ? "viewed from the far left" : "centered view";
+            const pitchDesc = state.pitch > 20 ? "extreme high-angle shot looking down" : state.pitch < -20 ? "low-angle worm-eye view" : "normal eye level";
+            const zoomDesc = state.zoom > 120 ? "extreme macro close-up" : state.zoom < 35 ? "ultra-wide landscape shot" : "standard lens";
+            
+            const editPrompt = `Modify this image perspective. New camera settings: ${orbitDesc}, ${pitchDesc}, ${zoomDesc}. Maintain the core objects and style exactly.`;
+
+            try {
+                const base64Data = state.baseImage.split(',')[1];
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${IMG_EDIT_MODEL}:generateContent?key=${apiKey}`;
+
+                const response = await fetchWithRetry(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: editPrompt },
+                                { inlineData: { mimeType: "image/png", data: base64Data } }
+                            ]
+                        }],
+                        generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+                    })
+                });
+
+                const newB64 = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                if (newB64) {
+                    state.currentImage = `data:image/png;base64,${newB64}`;
+                } else {
+                    alert("無法生成新視角，請嘗試調整參數。");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("編輯失敗：" + err.message);
+            } finally {
+                state.isLoading = false;
+                updateUIState();
+            }
+        }
+
+        // --- Utilities ---
+
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    state.baseImage = e.target.result;
+                    state.currentImage = e.target.result;
+                    updateUIState();
+                    // Close mobile drawer if open to show result
+                    toggleMobileDrawer(false);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function resetApp() {
+            state.baseImage = null;
+            state.currentImage = null;
+            state.prompt = "一個陽光普照的森林教室，木造桌椅";
+            state.orbit = 0;
+            state.pitch = 0;
+            state.zoom = 50;
+            
+            // Reset Inputs
+            document.querySelectorAll('textarea').forEach(t => t.value = state.prompt);
+            updateSliderVal('orbit', 0);
+            updateSliderVal('pitch', 0);
+            updateSliderVal('zoom', 50);
+            
+            updateUIState();
+        }
+
+        function downloadImage() {
+            if (state.currentImage) {
+                const a = document.createElement('a');
+                a.href = state.currentImage;
+                a.download = `perspective_edit_${Date.now()}.png`;
+                a.click();
+            }
+        }
+
+        function openFullImage() {
+            if (state.currentImage) {
+                const win = window.open();
+                win.document.write(`<body style="margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh;"><img src="${state.currentImage}" style="max-width:100%;max-height:100%"/></body>`);
+            }
+        }
+
+    </script>
+</body>
+</html>
+
