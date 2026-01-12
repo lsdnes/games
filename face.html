@@ -77,11 +77,9 @@
                 </div>
                 <h1 class="font-bold text-lg tracking-tight">視角編輯器 <span class="text-indigo-500">PRO</span></h1>
             </div>
-            <!-- Close Sidebar Button (Optional functionality) -->
         </div>
         
         <div class="flex-1 overflow-y-auto no-scrollbar p-6">
-            <!-- Control Panel Content is injected here via JS for reusability, or hardcoded below -->
             <div id="desktop-controls"></div>
         </div>
     </aside>
@@ -177,7 +175,7 @@
         </div>
     </main>
 
-    <!-- Template for Controls (Will be cloned to Desktop and Mobile containers) -->
+    <!-- Template for Controls -->
     <template id="controls-template">
         <div class="space-y-6">
             <!-- Input Section -->
@@ -188,18 +186,18 @@
                 <div class="space-y-3">
                     <div class="relative group">
                         <textarea 
-                            id="prompt-input"
-                            class="w-full bg-[#1e222d] border border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none outline-none text-white placeholder-slate-500"
+                            class="prompt-input w-full bg-[#1e222d] border border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none outline-none text-white placeholder-slate-500"
                             rows="3" 
                             placeholder="輸入描述或指令..."
                         >一個陽光普照的森林教室，木造桌椅</textarea>
-                        <button onclick="generateInitialImage()" class="absolute bottom-2 right-2 p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-all shadow-md">
+                        <button class="generate-btn absolute bottom-2 right-2 p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-all shadow-md">
                             <i data-lucide="sparkles" class="w-4 h-4"></i>
                         </button>
                     </div>
                     <div class="relative">
-                        <input type="file" id="file-upload" hidden onchange="handleFileUpload(this)">
-                        <label for="file-upload" class="flex items-center justify-center w-full py-2 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-xs font-bold cursor-pointer transition-all text-slate-300">
+                        <!-- 注意：ID 會在 JS 中動態生成，避免重複 -->
+                        <input type="file" class="file-input" hidden>
+                        <label class="file-label flex items-center justify-center w-full py-2 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-xs font-bold cursor-pointer transition-all text-slate-300">
                             <i data-lucide="upload" class="w-3 h-3 mr-2"></i> 上傳圖片
                         </label>
                     </div>
@@ -218,7 +216,7 @@
                             <span class="text-slate-400">環繞角度 Orbit</span>
                             <span class="text-indigo-400 font-mono"><span class="orbit-val">0</span>°</span>
                         </div>
-                        <input type="range" min="-180" max="180" value="0" class="orbit-slider w-full h-1.5 bg-slate-800 rounded-lg appearance-none" oninput="updateSliderVal('orbit', this.value)">
+                        <input type="range" min="-180" max="180" value="0" class="orbit-slider w-full h-1.5 bg-slate-800 rounded-lg appearance-none">
                     </div>
                     <!-- Pitch -->
                     <div class="space-y-2">
@@ -226,7 +224,7 @@
                             <span class="text-slate-400">仰角 Pitch</span>
                             <span class="text-indigo-400 font-mono"><span class="pitch-val">0</span>°</span>
                         </div>
-                        <input type="range" min="-45" max="45" value="0" class="pitch-slider w-full h-1.5 bg-slate-800 rounded-lg appearance-none" oninput="updateSliderVal('pitch', this.value)">
+                        <input type="range" min="-45" max="45" value="0" class="pitch-slider w-full h-1.5 bg-slate-800 rounded-lg appearance-none">
                     </div>
                     <!-- Zoom -->
                     <div class="space-y-2">
@@ -234,11 +232,11 @@
                             <span class="text-slate-400">焦距 Zoom</span>
                             <span class="text-indigo-400 font-mono"><span class="zoom-val">50</span>mm</span>
                         </div>
-                        <input type="range" min="14" max="200" value="50" class="zoom-slider w-full h-1.5 bg-slate-800 rounded-lg appearance-none" oninput="updateSliderVal('zoom', this.value)">
+                        <input type="range" min="14" max="200" value="50" class="zoom-slider w-full h-1.5 bg-slate-800 rounded-lg appearance-none">
                     </div>
                 </div>
 
-                <button onclick="applyPerspective()" id="render-btn" disabled class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed rounded-2xl font-bold text-sm shadow-xl transition-all flex items-center justify-center text-white">
+                <button id="render-btn" disabled class="render-btn w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed rounded-2xl font-bold text-sm shadow-xl transition-all flex items-center justify-center text-white">
                     <i data-lucide="zap" class="w-4 h-4 mr-2"></i>
                     <span class="btn-text">渲染新視角</span>
                 </button>
@@ -249,7 +247,7 @@
     <!-- JavaScript Logic -->
     <script>
         // --- Configuration ---
-        const apiKey = ""; // API Key 會由執行環境提供
+        const apiKey = ""; // ⚠️ 如果這裡為空，按鈕會立即提示錯誤
         const IMG_GEN_MODEL = "imagen-4.0-generate-001";
         const IMG_EDIT_MODEL = "gemini-2.5-flash-image-preview";
 
@@ -268,9 +266,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderControls();
             lucide.createIcons();
-            
-            // Sync inputs between desktop and mobile if needed
-            // For simplicity, we update state and re-render values
         });
 
         // --- UI Rendering ---
@@ -292,15 +287,29 @@
 
         // Helper to make IDs unique and bind events
         function updateControlIds(fragment, suffix) {
-            // Update Textarea
-            const textarea = fragment.querySelector('textarea');
+            // 1. Setup Prompt Textarea
+            const textarea = fragment.querySelector('.prompt-input');
             textarea.value = state.prompt;
             textarea.oninput = (e) => {
                 state.prompt = e.target.value;
-                document.querySelectorAll('textarea').forEach(t => t.value = state.prompt);
+                document.querySelectorAll('.prompt-input').forEach(t => t.value = state.prompt);
             };
 
-            // Update Sliders
+            // 2. Setup Generate Button (Magic Wand)
+            const genBtn = fragment.querySelector('.generate-btn');
+            genBtn.onclick = generateInitialImage;
+
+            // 3. Setup File Upload (FIXED ID CONFLICTS)
+            const fileInput = fragment.querySelector('.file-input');
+            const fileLabel = fragment.querySelector('.file-label');
+            const uniqueId = `file-upload-${suffix}`;
+            
+            fileInput.id = uniqueId;
+            fileLabel.setAttribute('for', uniqueId);
+            
+            fileInput.onchange = (e) => handleFileUpload(e.target);
+
+            // 4. Setup Sliders
             ['orbit', 'pitch', 'zoom'].forEach(key => {
                 const slider = fragment.querySelector(`.${key}-slider`);
                 const label = fragment.querySelector(`.${key}-val`);
@@ -311,9 +320,10 @@
                 slider.oninput = (e) => updateSliderVal(key, e.target.value);
             });
 
-            // Update Render Button
-            const btn = fragment.querySelector('#render-btn');
-            btn.id = `render-btn-${suffix}`;
+            // 5. Setup Render Button (Perspective)
+            const renderBtn = fragment.querySelector('.render-btn');
+            renderBtn.id = `render-btn-${suffix}`;
+            renderBtn.onclick = applyPerspective;
         }
 
         function updateSliderVal(key, value) {
@@ -370,6 +380,7 @@
                 renderBtns.forEach(btn => {
                     btn.disabled = false;
                     btn.querySelector('.btn-text').textContent = "渲染新視角";
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
                 });
             } else {
                 imgContainer.classList.add('hidden');
@@ -377,7 +388,10 @@
                 downloadBtn.classList.add('hidden');
                 
                 // Disable Render Buttons
-                renderBtns.forEach(btn => btn.disabled = true);
+                renderBtns.forEach(btn => {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                });
             }
         }
 
@@ -388,7 +402,7 @@
                 try {
                     const response = await fetch(url, options);
                     if (response.ok) return await response.json();
-                    if (response.status !== 429 && response.status < 500) throw new Error(`API Error: ${response.status}`);
+                    if (response.status !== 429 && response.status < 500) throw new Error(`API Error: ${response.status} ${response.statusText}`);
                 } catch (err) {
                     if (i === retries - 1) throw err;
                     await new Promise(res => setTimeout(res, 1000 * (i + 1)));
@@ -397,12 +411,12 @@
         }
 
         async function generateInitialImage() {
+            // Immediate Check
+            if (!apiKey) return alert("請先設定 API Key 才能使用 AI 生成功能。");
             if (!state.prompt) return alert("請輸入描述");
             
             state.isLoading = true;
             updateUIState();
-            
-            // Close mobile drawer if open
             toggleMobileDrawer(false);
 
             try {
@@ -422,12 +436,12 @@
                     state.baseImage = imageUrl;
                     state.currentImage = imageUrl;
                 } else {
-                    console.error("No predictions found", data);
-                    alert("生成失敗，請稍後再試。");
+                    console.error("API Response:", data);
+                    throw new Error("API 回傳格式不符");
                 }
             } catch (err) {
                 console.error(err);
-                alert("API 錯誤：" + err.message);
+                alert("生成失敗：" + err.message);
             } finally {
                 state.isLoading = false;
                 updateUIState();
@@ -435,13 +449,13 @@
         }
 
         async function applyPerspective() {
+            if (!apiKey) return alert("請先設定 API Key");
             if (!state.baseImage) return;
 
             state.isLoading = true;
             updateUIState();
             toggleMobileDrawer(false);
 
-            // Construct Prompt
             const orbitDesc = state.orbit > 30 ? "viewed from the far right" : state.orbit < -30 ? "viewed from the far left" : "centered view";
             const pitchDesc = state.pitch > 20 ? "extreme high-angle shot looking down" : state.pitch < -20 ? "low-angle worm-eye view" : "normal eye level";
             const zoomDesc = state.zoom > 120 ? "extreme macro close-up" : state.zoom < 35 ? "ultra-wide landscape shot" : "standard lens";
@@ -470,7 +484,7 @@
                 if (newB64) {
                     state.currentImage = `data:image/png;base64,${newB64}`;
                 } else {
-                    alert("無法生成新視角，請嘗試調整參數。");
+                    alert("無法生成新視角，請稍後再試。");
                 }
             } catch (err) {
                 console.error(err);
@@ -491,7 +505,6 @@
                     state.baseImage = e.target.result;
                     state.currentImage = e.target.result;
                     updateUIState();
-                    // Close mobile drawer if open to show result
                     toggleMobileDrawer(false);
                 };
                 reader.readAsDataURL(file);
@@ -506,8 +519,7 @@
             state.pitch = 0;
             state.zoom = 50;
             
-            // Reset Inputs
-            document.querySelectorAll('textarea').forEach(t => t.value = state.prompt);
+            document.querySelectorAll('.prompt-input').forEach(t => t.value = state.prompt);
             updateSliderVal('orbit', 0);
             updateSliderVal('pitch', 0);
             updateSliderVal('zoom', 50);
@@ -534,4 +546,3 @@
     </script>
 </body>
 </html>
-
